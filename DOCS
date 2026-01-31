@@ -1,0 +1,123 @@
+Types:
+Primitives:
+1. Qubit (qubit)
+  Defined as 1 quantum bit. Can be initialised ([state]) to 1, 0, true, false, or into a quantum state defined by a 2*1 matrix, its 1*2 transpose, or a string representation*.
+  Syntax:
+  x = qubit([state])
+  or
+  x = qubit()  (defaults to state |0>)
+
+2. C-bit (cbit)
+  Defined as 1 classical bit. Can be initialised ([value]) to 1, 0, true, or false.
+  Syntax:
+  x = bit([value])
+  or
+  x = bit() (defaults to 0/false)
+  or
+  x = true/false
+
+3. Q-num (qnum)
+  Defined as an number represented by a register of qubits. Can be initialised into a state defined by a n*1 matrix, its 1*n transpose, or a string representation*.
+  Numbers are encoded and stored in binary in the computational basis either with floating point or 2's complement.
+  Syntax:
+  x = qnum([value])
+  x = qnum(5)
+  or
+  x = qnum(5.123)
+  or
+  x = qnum([state])
+
+4. Phase-encoded Q-num (qnump)
+  Defined as an number represented by a register of qubits. Can be initialised into a state defined by a n*1 matrix, its 1*n transpose, or a string representation*.
+  Numbers are encoded and stored in the phase elemenet of the register using Quantum Fourier Transform.
+  Syntax:
+  x = qnump([value])
+  x = qnump(5)
+  or
+  x = qnump(5.123)
+  or
+  x = qnump([state])
+
+
+5. C-num (cnum)
+  Defined as a number represented by a register of classical bits. Can be initialised to a number.
+  Syntax:
+  x = cnum(5)
+  or
+  x = 5
+  or
+  x = cnum(5.5)
+  or
+  x = 5.5
+
+6. Q-string (qstr)
+  Defined as a string represented by a register of qubits. Can be initialised to a string of characters.
+  Strings are encoded using ASCII. Each character requires 7 qubits.
+  Syntax:
+  x = qstr("")
+
+7. Shortend Q-string (qstrs)
+  Defined as a string represented by a register of qubits. Can be initialised to a string of characters.
+  Strings are encoded using a non-alphanumeric version of ITA2. Each character requires 5 qubits.
+  Syntax:
+  x = qstrs("")
+
+8. Shortend Cyrillic Q-string (qstrc)
+  Defined as a string represented by a register of qubits. Can be initialised to a string of characters.
+  Strings are encoded using a non-alphanumeric version of MTK2. Each character requires 5 qubits.
+  Syntax:
+  x = qstrc("")
+
+9. Extended Q-string (qstre)
+  Defined as a string represented by a register of qubits. Can be initialised to a string of characters.
+  Strings are encoded using UTF-8. Each character requires 8-32 qubits.
+  Syntax:
+  x = qstre("")
+
+10. C-string (cstr)
+  Defined as a string represented by a register of classical bits. Can be initialised to a string of characters.
+  Strings are encoded using ASCII. Each character requires 7 bits.
+  Syntax:
+  x = cstr("")
+  or
+  x = ""
+
+11. Shortend C-string (cstrs)
+  Defined as a string represented by a register of classical bits. Can be initialised to a string of characters.
+  Strings are encoded using a non-alphanumeric version of ITA2. Each character requires 5 bits.
+  Syntax:
+  x = cstrs("")
+
+12. Shortend Cyrillic C-string (cstrc)
+  Defined as a string represented by a register of classical bits. Can be initialised to a string of characters.
+  Strings are encoded using a non-alphanumeric version of MTK2. Each character requires 5 bits.
+  Syntax:
+  x = cstrc("")
+  or
+  x = "[Compatible string containing characters not compatible with ASCII]"
+
+13. Extended C-string (cstre)
+  Defined as a string represented by a register of classical bits. Can be initialised to a string of characters.
+  Strings are encoded using UTF-8. Each character requires between 8-32 bits.
+  Syntax:
+  x = cstre("")
+  or
+  x = "[Compatible string containing characters not compatible with ASCII or MTK2]"
+
+Data Structures:
+1. List (list)
+  Defined as an ordered collection of primatives, references, or data structures. Can be initialised with type arguements or list members.
+  Syntax:
+  x = list("type", [comma-separated list of types])      eg. x = list("type",[cnum,cstr,set,matrix])  Note: "type" must be a cstr containing "type"
+  or
+  x = list([comma-separated list of members])            eg. x = list([x,y,"cat",5])
+
+2. Set
+3. Matrix
+4. Map
+5. Struct
+
+Quantum Circuit Design:
+1. Gate
+2. Circuit
+3. Block
