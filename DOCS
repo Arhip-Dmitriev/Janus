@@ -1,3 +1,17 @@
+Basic Syntax:
+
+Commands are split by new-line, except where there is a missing closed parenthese.
+eg.   1 x = 5      is valid and equivalent to    1 x = 5  
+      2 x = x + 5                                2 x = x + 5
+      3 y = cnum(x - 5)                          3 y = cnum(x - 5)
+      4 y = cnum(45                              4 y = cnum(45 + 4)
+      5    +
+      6   4)
+
+References are assigned using '='
+Single-line comments start with '#'
+Mutli-line comments start and end with '##'
+
 Types:
 Primitives:
 1. Qubit (qubit)
@@ -106,18 +120,98 @@ Primitives:
 
 Data Structures:
 1. List (list)
-  Defined as an ordered collection of primatives, references, or data structures. Can be initialised with type arguements or list members.
+  Defined as an ordered collection of primatives, references, or data structures. Can be initialised with type arguements, list members, or length. Initializing with types limits the type of reference the list may contain.
   Syntax:
   x = list("type", [comma-separated list of types])      eg. x = list("type",[cnum,cstr,set,matrix])  Note: "type" must be a cstr containing "type"
   or
   x = list([comma-separated list of members])            eg. x = list([x,y,"cat",5])
+  or
+  x = list(cnum)                                         eg. x = list(3) => [null,null,null]
+  or
+  x = list(cnum,[comma-separated list of types])         eg. x = list(3,[cnum]) => [0,0,0]
 
-2. Set
-3. Matrix
-4. Map
-5. Struct
+2. Set (set)
+  Defined as an unordered collection of primatives, references, or data structures. Can be initialised with type arguements or set members. Initializing with types limits the type of reference the set may contain.
+  Syntax:
+  x = set("type", [comma-separated list of types])      eg. x = set("type",[cnum,cstr,set,matrix])  Note: "type" must be a cstr containing "type"
+  or
+  x = set([comma-separated list of members])            eg. x = set([x,y,"cat",5])
+
+3. Matrix (matrix)
+  Defined as an 2D nested list where all inner lists have the same length. Can be initiliased with a list of lists, indiviudal references, or by type. Initializing with types limits the type of reference the matrix may contain.
+  Syntax:
+  x = [i00,i0n;in0,inn]                                eg. x = [1,2;3,4] makes the following matrix   [ 1 2 ]
+  or                                                                                                  [ 3 4 ]
+  x = matrix([i00,i0n;in0,inn])                        Note: that the entries can be references of any type.
+  or
+  x = matrix("type", [comma-separated list of types])  eg. x = matrix("type",[cnum,cstr,set,struct]) Note: "type" must be a cstr containing "type"
+  or
+  x = matrix("list", [list0,list1,listn]) Note: "list" must be a cstr containing "list"
+
+4. Map (map)
+  Defined as a set of tuples. Can be initialized with 2 lists, a 2*n or n*2 matrix, indivual references, or by type. Initializing with types limits the type of reference the matrix may contain.
+  Syntax:
+  x = map(listk,listv)
+  or
+  x = map(matrix)
+  or
+  x = map([comma seperate list of key-value pairs])  eg. x = map([key0-value0,key1-value1,keyn-valuen])
+  or
+  x = map("type", [comma-separated list of types])   eg. x = map("type",[cnum,cstr,set,struct])   Note: "type" must be a cstr containing "type"
+  or
+  x = [comma seperate list of key-value pairs]       eg. x = [key0-value0,key1-value1,keyn-valuen]
+
+5. Custom Data Structure (struct)
+  Defined as a custom data structure combining several types, primitves, data structures, and other elements. Can be initialized with a map of key-value pairs.
+  Syntax:
+  x = struct([map of name-type pairs])                eg. x = struct([number-cnum,string-cstr,qubit-qubit])
+  x.name = access to single element                   eg. x.number = 5
 
 Quantum Circuit Design:
-1. Gate
-2. Circuit
-3. Block
+1. Gate (gate)
+  Defined as a reversible, unitary transformation that acts on qubits. Can be initialized with a matrix.
+  Syntax:
+  x = gate(matrix)
+  or 
+  x = gate([i00,i0n;in0,inn])
+
+2. Circuit (circ)
+  Defined as an ordered sequence of quantum gates applied to a set of qubits. Can be initialised with a collection of qubits, matrix, number, or string, and a 2d list or matrix of gates.
+  Syntax:
+    x = circ([list of qubits, qnum, state vector as a matrix, or any q-string variant],[2D list of gates, matrix of gates, or block])
+    or
+    x = circ(number, [2D list of gates, matrix of gates, or block])
+    or
+    x = circ("", [2D list of gates, matrix of gates, or block])
+
+  Further information: 
+    The first argument determines the number of and initial states of the qubits in the circuit.
+    Therefore, it must represent a register of qubits in some way (list,qnum,qsrt variants) , or be made to represent such (numbers, strings).
+
+    The second argument determines the subsequent gates by assigning each qubit a list of gates of equal length. Position in the lists signfies time.
+    i.e. All gates at index 0 are applied first, then index 1, and so forth.
+    Empty elements (null) are treated as the identity.
+
+    Below is an example circuit: circ([1;0;0;0], [ xgate, null; igate, zgate]) which follows circ([state vector as a matrix], [matrix of gates])
+
+    |0>--[xgate]--[igate]--
+    |0>--[igate]--[zgate]--
+  
+3. Blocks (block)
+  Defined as a grouped sequence of gates for a specific number of qubits. Can be initialized using a 2D list or a matrix of gates.
+  Syntax:
+  x = block([list0,list1,listn])
+  or
+  x = block(matrix)
+
+  Further infortmation:
+    A block save a sequence of gate across several undefined qubits by assigning each a list of gates of equal length. Position in the lists signfies time.
+    i.e. All gates at index 0 would be applied first, then index 1, and so forth.
+    Empty elements (null) are treated as the identity.
+
+    Below is an example block: block([ xgate, null; igate, zgate]) which follows block(matrix)
+
+   --[xgate]--[igate]--
+   --[igate]--[zgate]--
+
+Operators:
