@@ -11,6 +11,12 @@ eg.   1 x = 5      is valid and equivalent to    1 x = 5
 References are assigned using '='
 Single-line comments start with '#'
 Mutli-line comments start and end with '##'
+Whitespace is not considered anywhere except for when found within string literals.
+
+OPERATOR PRECEDENCE TABLE
+
+x = x + x  is valid and will result in x being doubled if it is a register type (primitive).
+x = x + x + x + x is also valid and will result in x being quadrupled if it is a regsiter type (primitive).
 
 Types:
 Primitives:
@@ -215,3 +221,245 @@ Quantum Circuit Design:
    --[igate]--[zgate]--
 
 Operators:
+
+1. Addition
+      Adds 2 registers
+      Syntax: x = Register1 + Register2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      or 
+
+      Adds 2 matrices
+      Syntax: x = Matrix1 + Matrix2
+      Allowed types for x, Matrix1, & Matrix2: matrix
+
+
+2. Subtraction
+      Subtracts Register2 from Register1 (Register1 + -(Register2))
+      Syntax: x = Register1 - Register2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+3. Multiplication
+      Multiplies 2 registers.
+      Syntax: x = Register1 * Register2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+4. Division
+      Divides Register1 by Register2
+      Syntax: x = Register1 / Register2
+      Example: 10 / 4 = 2.5
+      Note that this division is exact, and will return decimal values. (Maximum bit-length of x=Register1+Register2, x is rounded off at length)
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+5. Concatenation
+      Combines 2 collections
+      Syntax: x = Collection1 + Collection2
+      Allowed types for x, Collection1, & Collection2: List, Set, Map
+      Example: [1,2,3] + [3,2,1] -> [1,2,3,3,2,1]
+
+      or
+
+      Combines 2 strings
+      Syntax: x = concat(String1, String2)
+      Allowed types for x, String1, & String2: qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      String1 & String2 will be decoded into text according to their own schemes, combined, & encoded according to x's scheme.
+
+
+6. Modulus
+      Returns the remainder incurred when attempting to divide Register1 by Register2
+      Syntax: x = Register1 % Register2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+7. Exponentation
+      Returns Register1 raised to the Register2-th power
+      Syntax x = Register1 ^ Register2
+      Example: 5 ^ 2 => 25
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+
+8. And
+      Returns the outcome of bitwise logic operation Register1 and Register2
+      Syntax x = Register1 and Register2
+      Example: 5 and 3 => 1
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+9. Or
+      Returns the outcome of the bitwise logic operation Register1 or Register2
+      Syntax x = Register1 or Register2
+      Example: 5 or 2 => 8
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+10. Bitwise Negation
+      Returns a binary negation of the input register.
+      Syntax x = not Register
+      Example: not 5 => 2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+11. Equality
+      Returns 1-bit boolean based on whether 2 registers are numerically equal
+      Syntax x = Register1 == Register2
+      Example: 5 == 5 => 1/true
+      Allowed types for x: qubit, cbit.
+      Allowed types for Register1, & Register2: qubit, cbit, qnum, qnump, cnum.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+12. Identicality
+      Returns 1-bit boolean based on whether 2 variables encoded the same way.
+      Syntax x = Var1 issame Var2
+      Example: Var1 = Q-String encoded as 011000110110000101110100 ("CAT"), Var2 = C-num also encoded as 011000110110000101110100 (6513012)
+            Var1 issame Var2 => 1/true
+      Allowed types for x: qubit, cbit.
+      Allowed types for Var1 & Var2: any.
+
+13. Type-Identicality
+      Returns 1-bit boolean based on whether to variables of the same type (quantum/classical ignored) are encoded the same way.
+      Syntax x = Var1 is Var2
+      Example: Var1 = Q-string "CAT", Var2 = C-string "CAT". Var1 is Var2 => 1/true.
+      Note: if Var1 & Var2 are not of the same type(quantum/classical ignored), it will return 0/false.
+      Allowed types for x: qubit, cbit.
+      Allowed types for Var1 & Var2: any.
+
+14. Strict Type-Identicality
+      Returns 1-bit boolean based on whether to variables of the same type are encoded the same way.
+      Syntax x = Var1 is! Var2
+      Example: Var1 = Q-string "CAT", Var2 = Q-string "CAT". Var1 is! Var2 => 1/true.
+      Note: if Var1 & Var2 are not of the same type, it will return 0/false. (QUANTUM/CLASSICAL IS NOT IGNORED)
+      Allowed types for x: qubit, cbit.
+      Allowed types for Var1 & Var2: any.
+
+15. Boolean Negation
+      Flips a boolean between 1/true and 0/false
+      Syntax x = !Boolean
+      Example: Boolean = 1/true. !Boolean => 0/false
+      Allowed types for x & Boolean: qubit, cbit.
+
+16. Less-than
+      Returns 1/true if Register1 is numerically less-than Register2
+      Syntax: x = Register1 < Register2
+      Allowed types for x: qubit, cbit.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+17. Greater-than
+      Returns 1/true if Register1 is numerically greater-than Register2
+      Syntax: x = Register1 > Register2
+      Allowed types for x: qubit, cbit.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+18. Less-than or Equal-to
+      Returns 1/true if Register1 is numerically less-than or equal-to Register2
+      Syntax: x = Register1 <= Register2
+      Allowed types for x: qubit, cbit.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+19. Less-than
+      Returns 1/true if Register1 is numerically greater-than or equal-to Register2
+      Syntax: x = Register1 >= Register2
+      Allowed types for x: qubit, cbit.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+20. Integer Division
+      Divides Register1 by Register2, and cuts off any decimal values
+      Syntax: x = Register1 // Register2
+      Example: 10 // 4 => 2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+21. Type-Checking
+      Returns 1/true if 2 variables are of the same type, ignoring the quantum/classical divide
+      Syntax: x = Var1 istypeof Var2
+      Allowed types for x: qubit, cbit.
+      Allowed types for Var1 & Var2: any.
+
+22. Strict Type-Checking
+      Returns 1/true if 2 variables are of the same type.
+      Syntax: x = Var1 istypeof! Var2
+      Allowed types for x: qubit, cbit.
+      Allowed types for Var1 & Var2: any.
+
+23.  Left Shift
+      Bitwise shifts a register left
+      Syntax x = <<Register
+      Allowed types of register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre
+
+24.  Right Shift
+      Bitwise shifts a register right
+      Syntax x = >>Register
+      Allowed types of register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre
+
+25. Either-or
+      Returns the result of the bitwise operation Register1 XOR Register2
+      Syntax x = Register1 xor Register2
+      Example: 5 xor 3 => 6
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+26. Not-and
+      Returns the result of the bitwise operation Register1 NAND Register2
+      Syntax x = Register1 xor Register2
+      Example: 5 nand 4 => 3
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+27. Not-either-or
+      Returns the result of the bitwise operation Register1 XNOR Register2
+      Syntax x = Register1 xnor Register2
+      Example: 5 nand 4 => 6
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+29. Not-or
+      Returns the result of the bitwise operation Register1 NOR Register2
+      Syntax x = Register1 nor Register2
+      Example: 5 nand 4 => 2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+30. Tensor
+31. Dot/Inner-Product
+32. Outer Product
+33. Cross Product
+34. Trace
+35. Partial Trace
+36. Measurement
+37. Predicted Measurment (Quantum-peek)
+38. Expectation Value
+39. Reference Swap
+40. Collection Cut
+41. Collection add
+42. Colleciton place
+43. Collection delete
+44. Collection read
+45. Matrix subtraction
+46. Matrix multiplicaiton
+47. determinant
+48. matrix edit
+49. matrix add-column
+50. matrix add-row
+51. matrix read
+52. matrix delete row
+53. matrix delete column
+54. print
+55. State of quantum
+56. type casting
+57. make gate control
+58. evals
+59. evec
+60. transpose
+61. conjugate transpose
+62. solve for x
+63. solve system for (vars)
+64. error catching system
+      
