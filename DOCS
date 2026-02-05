@@ -461,5 +461,55 @@ Operators:
 61. conjugate transpose
 62. solve for x
 63. solve system for (vars)
-64. error catching system
-      
+64. Run circuit w/ noise+time (iterations)
+65. Difference operator (reveals how smth has changed)
+66. Parallel functin exec. (easy threads)
+67. Threads (hard threads)
+68. gate's in block/circuit
+69. qubits in block circuit
+70. depth of block / circuit
+71. substring
+72. read file
+73. write to file
+74. standardized save format for gate, block, and circuit
+75. log
+76. sin
+77. cos
+78. pi
+79. e
+80. arcsin
+81. arccos
+82. tan
+83. arctan
+84. sec
+85. arcsec
+86. csc
+87. arccsc
+88. sinh
+89. cosh
+90. mean
+91. variance
+92. standard deviation
+93. derivative
+94. integral
+95. min gate set required for circuit
+96. do 2 circuits make same output
+97. is unitary?
+
+
+
+Control Flow:
+1. Conditional (if, else, else if)
+2. For Loop (break)
+3. While Loop (break)
+4. Repeat n-times loop
+5. For-each n in y loop
+
+Error Catching
+1. try, catch, throw, run "x code" if caught
+
+Function Definitions
+
+Library Definition and Use
+
+ADD BIT LIMITS TO ALL TYPE DEFS!!
