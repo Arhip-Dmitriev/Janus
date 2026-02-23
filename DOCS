@@ -554,10 +554,14 @@ Operators:
 
 49. matrix add-column
       Returns the result of adding a column/Vector to a Matrix
-      Syntax x = addcolumn(Matrix, Vector)
+      Syntax:
+      x = addcolumn(Matrix, Vector)
       or
-      Syntax x = addcolumn(Vector, Matrix)
-      Example:
+      x = addcolumn(Vector, Matrix)
+      or
+      x = addcolumn(Matrix, Vector, Column-Index)
+
+      Examples:
       y = [1,2;3,4]
       x = [5;6]
 
@@ -567,29 +571,44 @@ Operators:
       addcolumn(x,y) => | 5 1 2 |
                         | 6 3 4 |
 
+      addcolumn(y,x,1) =>      | 1 5 2 |
+                               | 3 6 4 |
+
       Allowed types for x & Matrix: matrix, block, circ.
       Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Allowed types for Column-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.*
+      *All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 50. matrix add-row
       Returns the result of adding a row/Row-Vector to a Matrix
-      Syntax x = addrow(Matrix, Row-Vector)
+      Syntax:
+      x = addrow(Matrix, Row-Vector)
       or
-      Syntax x = addrow(Row-Vector, Matrix)
-      Example:
+      x = addrow(Row-Vector, Matrix)
+      or
+      x = addrow(Matrix, Vector, Row-Index)
+
+      Examples:
       y = [1,2;3,4]
       x = [5,6]
 
-      addcolumn(y,x) => | 1 2 |
+      addrow(y,x) =>    | 1 2 |
                         | 3 4 |
                         | 5 6 |
 
-      addcolumn(x,y) => | 5 6 |
+      addrow(x,y) =>    | 5 6 |
                         | 1 2 |
+                        | 3 4 |
+
+      addrow(y,x,1) =>  | 1 2 |
+                        | 5 6 |
                         | 3 4 |
 
       Allowed types for x & Matrix: matrix, block, circ.
       Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
-      
+      Allowed types for Row-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.*
+      *All non-numeric types will be treated as if they were (2's complement) using their register values.
+
 52. matrix delete row
 53. matrix delete column
 54. print
