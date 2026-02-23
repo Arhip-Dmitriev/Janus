@@ -167,7 +167,18 @@ Data Structures:
   or
   x = [comma seperate list of key-value pairs]       eg. x = [key0-value0,key1-value1,keyn-valuen]
 
-5. Custom Data Structure (struct)
+5. Dictionary (dict)
+  Defined as a list of tuples. Can be initialized with 2 lists, a 2*n or n*2 matrix, indivual references, or by type. Initializing with types limits the type of reference the matrix may contain.
+  Syntax:
+  x = dict(listk,listv)
+  or
+  x = dict(matrix)
+  or
+  x = dict([comma seperate list of key-value pairs])  eg. x = dict([key0-value0,key1-value1,keyn-valuen])
+  or
+  x = dict("type", [comma-separated list of types])   eg. x = dict("type",[cnum,cstr,set,struct])   Note: "type" must be a cstr containing "type"
+
+6. Custom Data Structure (struct)
   Defined as a custom data structure combining several types, primitves, data structures, and other elements. Can be initialized with a map of key-value pairs.
   Syntax:
   x = struct([map of name-type pairs])                eg. x = struct([number-cnum,string-cstr,qubit-qubit])
@@ -260,6 +271,14 @@ Operators:
       Syntax: x = Collection1 + Collection2
       Allowed types for x, Collection1, & Collection2: List, Set, Map
       Example: [1,2,3] + [3,2,1] -> [1,2,3,3,2,1]
+
+      or
+
+      Adds an Element to a Collection
+      Syntax: x = Collection + Element
+      Allowed types for x, & Collection: List, Set, Map
+      Allowed types for Element: any
+      Example: [1,2,3] + 4 -> [1,2,3,4]
 
       or
 
@@ -431,35 +450,41 @@ Operators:
       Returns the tensor product of two vectors
       Syntax x = Vector1 tensor Vector2
       Allowed types for x: matrix, block, circ.
-      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
 
       or
 
       Returns the tensor product of two scalars
       Syntax x = Register1 tensor Register2
       Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 31. Dot/Inner-Product
       Returns the inner/dot product of two vectors.
       Syntax x = Vector1 dot Vector2
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
       
 32. Outer Product
       Returns the outer product of two vectors
       Syntax x = Vector1 outer Vector2
       Allowed types for x: matrix, block, circ.
-      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 33. Cross Product
       Returns the cross product of two vectors
       Syntax x = Vector1 cross Vector2
       Allowed types for x, Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
       
 34. Trace
       Returns the trace of matrix.
       Syntax x = trace Matrix
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       Allowed types for Matrix: matrix, block, circ.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 35. Measurement
       Returns the measurement of a register, and collapses its state.
@@ -476,9 +501,10 @@ Operators:
       Syntax x = expect(Matrix, Register)
       Allowed types for Matrix: matrix, block, circ.
       Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 39. Reference Swap
-      Swaps the values of two references, returns 0 if succesful, 1 otherwise.
+      Swaps the values of two references, returns 0 if successful, 1 otherwise.
       Syntax x = Reference1 <-> Reference2
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       Allowed types for Reference1 & Reference2: any.
@@ -487,20 +513,83 @@ Operators:
             x = [1,2;3,4]                  x = 5
             y = 5                          y = [1,2;3,4] 
             x <-> y
-      
-40. Collection Cut
-      
-41. Collection add
-42. Colleciton place
+
+41. Collection Swap
+      Returns the collection created by swapping the elements at two given indices.
+      Syntax x = swap(Collection, Index1, Index2)
+      Allowed types for x & Collection: list, dict
+      Allowed types for Index1: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
 43. Collection delete
-44. Collection read
+      Returns the collection created by deleting an element at a given index.
+      Syntax x = delete(Collection, Index)
+      Allowed types for x & Collection: list, dict, set, map
+      Allowed types for Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      or
+
+      Returns the collection created by deleting an element.
+      Syntax x = delete(Collection, Element)
+      Allowed types for x & Collection: list, dict, set, map.
+      Allowed types for Element: any
+      
 45. Matrix subtraction
+      Returns the result of the subtraction of Matrix1 from Matrix2
+      Syntax x = Matrix2 - Matrix1
+      Allowed types for x, Matrix1, & Matrix2: matrix, block, circ.
+      
 46. Matrix multiplicaiton
+      Returns the product of Matrix1 and Matrix2
+      Syntax x = Matrix2 * Matrix1
+      Allowed types for x, Matrix1, & Matrix2: matrix, block, circ.
+
 47. determinant
-48. matrix edit
+      Returns the determinant of a Matrix
+      Syntax x = det(Matrix)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Matrix: matrix, block, circ
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
 49. matrix add-column
+      Returns the result of adding a column/Vector to a Matrix
+      Syntax x = addcolumn(Matrix, Vector)
+      or
+      Syntax x = addcolumn(Vector, Matrix)
+      Example:
+      y = [1,2;3,4]
+      x = [5;6]
+
+      addcolumn(y,x) => | 1 2 5 |
+                        | 3 4 6 |
+
+      addcolumn(x,y) => | 5 1 2 |
+                        | 6 3 4 |
+
+      Allowed types for x & Matrix: matrix, block, circ.
+      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+
 50. matrix add-row
-51. matrix read
+      Returns the result of adding a row/Row-Vector to a Matrix
+      Syntax x = addrow(Matrix, Row-Vector)
+      or
+      Syntax x = addrow(Row-Vector, Matrix)
+      Example:
+      y = [1,2;3,4]
+      x = [5,6]
+
+      addcolumn(y,x) => | 1 2 |
+                        | 3 4 |
+                        | 5 6 |
+
+      addcolumn(x,y) => | 5 6 |
+                        | 1 2 |
+                        | 3 4 |
+
+      Allowed types for x & Matrix: matrix, block, circ.
+      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      
 52. matrix delete row
 53. matrix delete column
 54. print
