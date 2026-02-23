@@ -428,16 +428,68 @@ Operators:
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 30. Tensor
+      Returns the tensor product of two vectors
+      Syntax x = Vector1 tensor Vector2
+      Allowed types for x: matrix, block, circ.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
+      or
+
+      Returns the tensor product of two scalars
+      Syntax x = Register1 tensor Register2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
 31. Dot/Inner-Product
+      Returns the inner/dot product of two vectors.
+      Syntax x = Vector1 dot Vector2
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      
 32. Outer Product
+      Returns the outer product of two vectors
+      Syntax x = Vector1 outer Vector2
+      Allowed types for x: matrix, block, circ.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
 33. Cross Product
+      Returns the cross product of two vectors
+      Syntax x = Vector1 cross Vector2
+      Allowed types for x, Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      
 34. Trace
-35. Partial Trace
-36. Measurement
+      Returns the trace of matrix.
+      Syntax x = trace Matrix
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Matrix: matrix, block, circ.
+
+35. Measurement
+      Returns the measurement of a register, and collapses its state.
+      Syntax x = measure(Register)
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
 37. Predicted Measurment (Quantum-peek)
+      Returns the measurement of a register, and DOES NOT collapse its state.
+      Syntax x = peek(Register)
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      
 38. Expectation Value
+      Returns the expectation value of an observable represented by a Matrix given a state represented by a Register
+      Syntax x = expect(Matrix, Register)
+      Allowed types for Matrix: matrix, block, circ.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
 39. Reference Swap
+      Swaps the values of two references, returns 0 if succesful, 1 otherwise.
+      Syntax x = Reference1 <-> Reference2
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Reference1 & Reference2: any.
+
+      Note: The following blocks of code produce equivalent resulting program states:
+            x = [1,2;3,4]                  x = 5
+            y = 5                          y = [1,2;3,4] 
+            x <-> y
+      
 40. Collection Cut
+      
 41. Collection add
 42. Colleciton place
 43. Collection delete
