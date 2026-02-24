@@ -610,8 +610,41 @@ Operators:
       *All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 52. matrix delete row
+      Returns the matrix produced by removing a specified Row of a Matrix.
+      Syntax x = deleterow(Matrix,Row)
+      Allowed types for x & Matrix: matrix, block, circ.
+      Allowed types for Row: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
 53. matrix delete column
+      Returns the matrix produced by removing a specified Column of a Matrix.
+      Syntax x = deletecolumn(Matrix,Column)
+      Allowed types for x & Matrix: matrix, block, circ.
+      Allowed types for Column: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
 54. print
+      prints the values of primitives and literals into the console, returns the printed string
+      Syntax:
+      "..."      <- denotes a string literal
+      ${...}      <- denotes a variable within a string literal
+      x = print(var)      var = 5            Output: "5"
+      or
+      x = print("text")                      Output: "text"
+      or
+      x = print("text with ${var}")          Output: "text with 5"
+
+      Escape sequences:
+      \n = newline       
+      \t = tab        '      '   (4 spaces)
+      \" = quote      '"'
+      \${...} = actually ${...}  (Note that "${text moretext" is purely a string literal with no variable interpolation)
+
+      Also note that you can make statements and do math within ${...} interpolations. i.e - ${2 + 2} would be converted to string literal "4"
+      In fact, you can also enter newlines into ${...} and compute long and complex calculations within them.
+      Example: print("text with ${x = 5
+                                  y 
+
 55. State of quantum
 56. type casting
 57. make gate control
