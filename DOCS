@@ -961,9 +961,40 @@ Operators:
       4. Depolarizing + Damping + Readout
 
 
-65. Difference operator (reveals how smth has changed)
+65. Difference operator
+      Returns an output detailing how two references of the same or comparable types are different. It does so numerical for numerical types, lexographically for string types, and by element for collections.
+      Syntax: x = a diff b
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map. 
+      Allowed types for a & b: any.
+      Examples:
+      1 diff 2 = 1
+      2 diff 1 = -1
+      1 diff 1 = 0
+      "hi" diff "bye" = 6
+      "bye" diff "hi" = -6
+      "hi" diff "hi" = 0
       
+      {1,2,3} diff {4,5,6} = 0 = {3,3,3} = {1 diff 4, 2 diff 5, 3 diff 6}
+      {1,2,3} diff {1,2,3} = 0 = {0,0,0} = {1 diff 1, 2 diff 2, 3 diff 3}
+      {1,2,3} diff {1,2,3,4} = 1 = {"0","0","0","n4"} = {"1 diff 1", "2 diff 2", "3 diff 3", n"0 diff 4"}
+      {1,2,3} diff {4,5,6,7,8} = 2 = {"3","3","3","n7","n8"} = {"1 diff 4", "2 diff 5", "3 diff 6", n"0 diff 7", n"0 diff 8"}
+      
+      
+66. String difference operator  
+      Returns a string detailing how String1 can be made into String2.
+      Syntax: x = String1 diffs String2
+      Allowed types for x, String1, String2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Note that all non-string types will be decoded and used as strings
+      Examples:
+      "dog" diffs "dogs" = "3s "
+      "dogs" diffs "dog" = "3 "
+      "table" diffs "bable" = "0tb "
+      "table" diffs "bables" = "0tb 5s "
+
+      Output string format = "char index + char in String1 + char in String2 + space"
+
 66. Parallel functin exec. (easy threads)
+
 67. Threads (hard threads)
 68. gate's in block/circuit
 69. qubits in block circuit
