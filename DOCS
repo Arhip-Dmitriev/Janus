@@ -230,6 +230,20 @@ Quantum Circuit Design:
    --[xgate]--[igate]--
    --[igate]--[zgate]--
 
+Threads:
+
+1. Thread (thread)
+      A explicitly managed OS thread.
+      Syntax:
+      x = thread(func())
+      or
+      x = thread() | creates a thread with no function, must be assigned one before use
+
+2. Lock (lock)
+      A mutual exclusion primitive for safe shared memory access across threads.
+      Syntax:
+      x = lock()
+
 Operators:
 
 1. Addition
@@ -993,10 +1007,77 @@ Operators:
 
       Output string format = "char index + char in String1 + char in String2 + space"
 
-66. Parallel functin exec. (easy threads)
+66. Parallel function execution (parallel)
+      Allows you to execute several functions concurrently, but without any shared memory access protection, returns 1 for success, and 0 for fail.
+      Syntax:
+      x = parallel{a = funca(),b = funcb(),c = funcc()}
+      or
+      x = parallel{funca(),funcb(),funcc()}
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for a, b, & c: return types for funca(), funcb(), and funcc() respectively.
+      Allowed types for funca(), funcb(), & funcc(): functions.
 
-67. Threads (hard threads)
+67. Spawn Thread (thread)
+      Spawns an explicitly managed OS thread to run a function.
+      Syntax: x = thread(func,))
+      Allowed types for x: thread.
+      Allowed types for func(): function.
+
+68. Join Thread (join)
+      Blocks the current thread until the Target thread finishes execution. Returns 1 if succesful, 0 if not.
+      Syntax: x = join(Target)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Target: thread
+
+69. Sleep Thread (sleep)
+      Pauses the target thread, Target. for a given number of milliseconds, Time. Returns Time if succesful, 0 if not.
+      Syntax: x = sleep(Target, Time)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Target: thread.
+      Allowed types for Time: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+70. Thread Priority (priority)
+      Sets the scheduling priority, Level, of a thread, Thread. Returns Level if succesful, 0 if not. The default priority is 0. Priority can be negative.
+      Syntax: x = priority(Thread, Level)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Thread: thread.
+      Allowed types for level: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+71. Name Thread (name)
+      Assign a name, String, to a thread, Thread. Returns name if successful, "" if not.
+      Syntax: x = name(Thread, String)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Thread: thread.
+      Allowed types for String: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
+72. Interrupt Thread (interrupt)
+      Sends an interrupt signal to the Target thread. Returns 1 if successful, 0 if not.
+      Syntax: x = interrupt(Target)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Target: thread.
+
+73. Scoped Lock (synchronized)
+      Locks the Lock for the duration of a block, automatically releasing on exit. Returns 1 if successful, 0 if not.
+      Syntax: x = synchronized(Lock) { ... }
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Lock: lock.
+
+74. Lock Mutex (lock)
+      Explicilty acquires/locks a Lock. Returns 1 if successful, 0 if not.
+      Syntax: x = lock(Lock)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Lock: lock.
+
+75. Unlock Mutex (unlock)
+      Explicitly releases/unlocks a Lock. Returns 1 if successful, 0 if not.
+      Syntax: x = unlock(Lock)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Lock: lock.
+
 68. gate's in block/circuit
+      Returns a list of gates 
 69. qubits in block circuit
 70. depth of block / circuit
 71. substring
@@ -1027,6 +1108,7 @@ Operators:
 96. do 2 circuits make same output
 97. is unitary?
 98. make circ into gate
+99. wait in seconds
 
 
 
@@ -1045,3 +1127,22 @@ Function Definitions
 Library Definition and Use
 
 ADD BIT LIMITS TO ALL TYPE DEFS!!
+
+BACKEND INFORMATION:
+Transpilation Targets:
+Qiskit, OpenQASM, PennyLane
+
+Compilation Backend:
+???
+
+Language of Development:
+Rust
+
+Thread Model:
+???
+
+Backend Simulators:
+QuEST
+
+Noise Models:
+Depolarization
