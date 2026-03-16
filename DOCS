@@ -8,7 +8,6 @@ eg.   1 x = 5      is valid and equivalent to    1 x = 5
       5    +
       6   4)
 
-References are assigned using '='
 Single-line comments start with '#'
 Mutli-line comments start and end with '##'
 Whitespace is not considered anywhere except for when found within string literals.
@@ -460,6 +459,22 @@ Operators:
       Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
+31. Comma
+      Evaluates Operand 1, then Operand 2 and returns the result of Operand 2.
+      Syntax x = Operand 1, Operand 2
+      Allowed types for x: result types for Operand 2
+      Allowed types for Operand 1 & Operand 2: an operator expression.
+      Example: x = y = 5, 10 + y | This would set y = 5 and return 15 into the value of x.
+      Example x = 10 + 5, y = 5 | This returns 1 if y is succesfully set to 5, and 0 if not.
+
+32. Assignment 
+      Set the value of Operand 1 equal to Operand 2, returns 1 if successful, 0 if not.
+      Syntax Operand 1 = Operand 2
+      Allowed types for Operand 1 & Operand 2: an operator expression.
+      Examples:
+      x = 15 (x=15) | x = y (x=y) | x = y = 5 (x=1 or 0, y=5)
+      
+
 31. Dot/Inner-Product
       Returns the inner/dot product of two vectors.
       Syntax x = Vector1 dot Vector2
@@ -487,9 +502,24 @@ Operators:
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 35. Measurement
-      Returns the measurement of a register, and collapses its state.
-      Syntax x = measure(Register)
+      Returns the measurement of a register in a Basis (defaults to Z), and collapses its state.
+      Syntax:
+
+      x = measure(Register)  
       Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+
+      or 
+
+      x = Register
+      Allowed types for x: cbit, cnum, cstr, ctrs, ctrc, cstre.
+      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre.
+
+      or
+
+      x = measure(Register, Basis)
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Basis: gate, matrix, circ, block.
+
 
 37. Predicted Measurment (Quantum-peek)
       Returns the measurement of a register, and DOES NOT collapse its state.
@@ -624,7 +654,7 @@ Operators:
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 54. print
-      prints the values of primitives and literals into the console, returns the printed string
+      Prints the values of primitives and literals into the console, returns the printed string
       Syntax:
       "..."      <- denotes a string literal
       ${...}      <- denotes a variable within a string literal
@@ -642,20 +672,297 @@ Operators:
 
       Also note that you can make statements and do math within ${...} interpolations. i.e - ${2 + 2} would be converted to string literal "4"
       In fact, you can also enter newlines into ${...} and compute long and complex calculations within them.
-      Example: print("text with ${x = 5
-                                  y 
+      Example: print("text with ${x = 5,          prints string literal "text with 15".
+                                  y = 10, 
+                                  x + y}") 
 
-55. State of quantum
+55. State of quantum (state)
+      Returns in normalised vector format (a,b,c,d,e) the state of a quantum register.
+      Syntax: x = state(Register)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list. 
+      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre.
+  
 56. type casting
-57. make gate control
+      Attempts to cast a variable of one type to another, and return the Variable as the new Type.
+      Syntax: x = (Type) Variable
+      Allowed types for x: Any operand which may have a variable of type Type assigned to it.
+      Allowed types for Type: Must be name of a type as it would appear in a list of allowed types, ie short form.
+      Allowed types for Variable: any
+
+      Note that there are a number of conversion whose methods are specified in this documentation, and all others will simply cast bitwise.
+      
+57. exclusive make gate control 
+      Converts a quantum of gate of n qubits to be n+i qubits and treat the new i qubits as a control
+      Syntax: x = ctrle(Gate, Control Qubits)
+      Allowed types for x & Gate: Gate, Matrix, block, circ.
+      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Examples:
+      a =    [1 0 0 0 0 0 0 0]
+             [0 1 0 0 0 0 0 0]
+             [0 0 1 0 0 0 0 0]
+             [0 0 0 1 0 0 0 0]
+             [0 0 0 0 1 0 0 0]
+             [0 0 0 0 0 0 0 1]
+             [0 0 0 0 0 0 1 0]
+             [0 0 0 0 0 1 0 0]
+
+      x = ctrle(a,1) returns |0⟩⟨0| ⊗ I₈ + |1⟩⟨1| ⊗ a
+             [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+             [0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+             [0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0]
+             [0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0]
+             [0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0]
+             [0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0]
+             [0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0]
+             [0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0]
+             [0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0]
+             [0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0]
+             [0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0]
+             [0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0]
+             [0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0]
+             [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1]
+             [0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0]
+             [0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0]
+
+      x = ctrle(a,2) returns (I₄ - |11⟩⟨11|) ⊗ I₈ + |11⟩⟨11| ⊗ a
+            [ 1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0]
+            [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0]
+            
+
+58. inclusive make gate control
+      Converts a quantum gate of n qubits to be n qubits and treat some qubits within the gate as control, and still act on these qubits.
+      Syntax: x = ctrli(Gate, Control Qubits)
+      Allowed types for x & Gate: Gate, Matrix, block, circ.
+      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Examples:
+      a = H⊗H⊗H 
+            [  1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2) ]
+            [  1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2) ]
+            [  1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2) ]
+            [  1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2) ]
+            [  1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2)  -1/(2√2)  -1/(2√2) ]
+            [  1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2)   1/(2√2) ]
+            [  1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2)   1/(2√2) ]
+            [  1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2)   1/(2√2)   1/(2√2)  -1/(2√2) ]
+
+      x = ctrli(a,0) returns (|0⟩⟨0| ⊗ I₄) + (|1⟩⟨1| ⊗ I₄) · a
+            [        1         0         0         0   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2) ]
+            [        0         1         0         0   1/(2√2)  -1/(2√2)   1/(2√2)  -1/(2√2) ]
+            [        0         0         1         0   1/(2√2)   1/(2√2)  -1/(2√2)  -1/(2√2) ]
+            [        0         0         0         1   1/(2√2)  -1/(2√2)  -1/(2√2)   1/(2√2) ]
+            [        0         0         0         0  -1/(2√2)  -1/(2√2)  -1/(2√2)  -1/(2√2) ]
+            [        0         0         0         0  -1/(2√2)   1/(2√2)  -1/(2√2)   1/(2√2) ]
+            [        0         0         0         0  -1/(2√2)  -1/(2√2)   1/(2√2)   1/(2√2) ]
+            [        0         0         0         0  -1/(2√2)   1/(2√2)   1/(2√2)  -1/(2√2) ]
+
+      x = ctrli(a,{0,2}) returns  (I₈ - |1⟩⟨1| ⊗ I₂ ⊗ |1⟩⟨1|) + a · (|1⟩⟨1| ⊗ I₂ ⊗ |1⟩⟨1|)
+            [        1         0         0         0         0   1/(2√2)         0   1/(2√2) ]
+            [        0         1         0         0         0  -1/(2√2)         0  -1/(2√2) ]
+            [        0         0         1         0         0   1/(2√2)         0  -1/(2√2) ]
+            [        0         0         0         1         0  -1/(2√2)         0   1/(2√2) ]
+            [        0         0         0         0         1  -1/(2√2)         0  -1/(2√2) ]
+            [        0         0         0         0         0   1/(2√2)         0   1/(2√2) ]
+            [        0         0         0         0         0  -1/(2√2)         1   1/(2√2) ]
+            [        0         0         0         0         0   1/(2√2)         0  -1/(2√2) ]
+            
+
+
 58. evals
+      Returns all the eigenvalues of a Matrix.
+      Syntax: x = evals(Matrix)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set.
+      Allowed types for Matrix: matrix, gate, block, circ
+
 59. evec
+      Returns all the eigenvectors of a Matrix.
+      Syntax: x = evecs(Matrix)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set.
+      Allowed types for Matrix: matrix, gate, block, circ
+
 60. transpose
+      Returns the transpose of a Matrix
+      Syntax: x = transpose(Matrix)
+      Allowed types for x & Matrix: matrix, gate, block, circ
+
 61. conjugate transpose
-62. solve for x
-63. solve system for (vars)
-64. Run circuit w/ noise+time (iterations)
+      Returns the conjugate transpose of a Matrix
+      Syntax: x = transposec(Matrix)
+      Allowed types for x & Matrix: matrix, gate, block, circ
+
+63. find a solution to a system of equations
+      Returns a solution to a system of equations.
+      Syntax: x = solvep({Equations},{Variables})
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map. 
+      Allowed types for Equations: A list or set of strings containing equations written according to this documentation, or one such equation as a string.
+      Allowed types for Variables: A list or set of strings containing all of the well-defined variables appearing in the equations, or one such variable as a string.
+      Examples:
+
+      x = solvep({"x+1=10"},{"x"}) = solvep("x+1=10","x") = 9 = "x=9" = {"x=9"}
+      x = solvep({"x+1=y","y*x=90"},{"x","y"}) = solvep({"x+1=y","y*x=90","y+z=10","z=10-y"},{"x","y"}) = {"x=9, y=10"} = "x=9, y=10"
+      x = solvep({"x^2 - 5*x + 6 = 0"},{"x"}) = {"x=2" or "x=3"} = "x=2" or "x=3"
+      x = solvep({"x^2 + y^2 = 25", "x + y = 7"},{"x","y"}) = {"x=3, y=4" or "x=4, y=3"} = "x=3, y=4" or "x=4, y=3"
+
+64. find all solutions to a system of equations
+      Returns all possible solutions to a system of equations.
+      Syntax: x = solvea({Equations},{Variables})
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map.
+      Allowed types for Equations: A list or set of strings containing equations written according to this documentation, or one such equation as a string.
+      Allowed types for Variables: A list or set of strings containing all of the well-defined variables appearing in the equations, or one such variable as a string.
+      Examples:
+
+      x = solvea({"x+1=10"},{"x"}) = solvea("x+1=10","x") = 9 = "x=9" = {"x=9"}
+      x = solvea({"x+1=y","y*x=90"},{"x","y"}) = solvea({"x+1=y","y*x=90","y+z=10","z=10-y"},{"x","y"}) = {"x=9, y=10"} = "x=9, y=10"
+      x = solvea({"x^2 - 5*x + 6 = 0"},{"x"}) = {"x=2","x=3"} = "x=2, x=3"
+      x = solvea({"x^2 + y^2 = 25", "x + y = 7"},{"x","y"}) = {"x=3, y=4", "x=4, y=3"} = "x=3, y=4; x=4, y=3"
+      
+
+64. Run circuit
+      Run a quantum Circuit with selected backend paramaters and return resulting register
+      Circuit = quantum circuit, Backend = Simulator Model, Noise = Noise model, T1 = vector/list of energy relaxation time per qubit in ms, T2 = vector/list of dephasing time per qubit in ms, gate time = matrix of time in takes to apply each gate to each qubit in ms
+      Note that t1,t2, & gate_time can be set to lower dimensional types to mean equality, meaning that they can all be numerical types and vector types, with loss of complexity.
+      Additionally, T2, T2, & Gate time are optional, dependent on the noise model.
+      Backend and Noise are selected via number.
+      RNG seeding is available for result reproduction.
+      You may include shots to run the simulation a number of times, this will return the most common resulting register.
+      If you wish to recieve a histogram instead, use 'Run circuit with histogram' or 'runh()' instead.
+      Syntax: 
+      x = run(Circuit)  | Default backend / backend №0
+      or
+      x = run(Circuit, Backend)
+      or 
+      x = run(Circuit, Backend, Noise)
+      or
+      x = run(Circuit, Backend, Noise, T1, T2, Gate_time)
+      or
+      x = run(Shots, Circuit)  | Default backend / backend №0
+      or
+      x = run(Shots, Circuit, Backend)
+      or 
+      x = run(Shots, Circuit, Backend, Noise)
+      or
+      x = run(Shots, Circuit, Backend, Noise, T1, T2, Gate_time)
+      or
+      x = run(Circuit, Seed)  | Default backend / backend №0
+      or
+      x = run(Circuit, Seed, Backend)
+      or 
+      x = run(Circuit, Seed, Backend, Noise)
+      or
+      x = run(Circuit, Seed, Backend, Noise, T1, T2, Gate_time)
+      or
+      x = run(Shots, Circuit, Seed)  | Default backend / backend №0
+      or
+      x = run(Shots, Circuit, Seed, Backend)
+      or 
+      x = run(Shots, Circuit, Seed, Backend, Noise)
+      or
+      x = run(Shots, Circuit, Seed, Backend, Noise, T1, T2, Gate_time)
+
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Circuit: circ, block, gate, matrix.
+      Allowed types for backend, T1, T2, Gate_time, Seed, Shots & Noise: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      
+
+      List of currently available Backends:
+      0. QuEST
+      
+      List of currently available Noise Models:
+      0. Depolarizing (ONLY THIS IS AVAILABLE NOW)
+      1. Damping
+      2. Depolarizing + Damping
+      3. Readout Error
+      4. Depolarizing + Damping + Readout
+
+65. Run circuit with histogram
+      Run a quantum Circuit with selected backend paramaters and return a histogram or resulting registers.
+      Circuit = quantum circuit, Backend = Simulator Model, Noise = Noise model, T1 = vector/list of energy relaxation time per qubit in ms, T2 = vector/list of dephasing time per qubit in ms, gate time = matrix of time in takes to apply each gate to each qubit in ms
+      Note that t1,t2, & gate_time can be set to lower dimensional types to mean equality, meaning that they can all be numerical types and vector types, with loss of complexity.
+      Additionally, T2, T2, & Gate time are optional, dependent on the noise model.
+      Backend and Noise are selected via number.
+      RNG seeding is available for result reproduction.
+      You may include shots to run the simulation a number of times, this will return the a histogram or resulting registers.
+      If you wish to recieve the most common result instead, use 'Run circuit' or 'run()' instead.
+      Syntax: 
+      x = runh(Circuit)  | Default backend / backend №0
+      or
+      x = runh(Circuit, Backend)
+      or 
+      x = runh(Circuit, Backend, Noise)
+      or
+      x = runh(Circuit, Backend, Noise, T1, T2, Gate_time)
+      or
+      x = runh(Shots, Circuit)  | Default backend / backend №0
+      or
+      x = runh(Shots, Circuit, Backend)
+      or 
+      x = runh(Shots, Circuit, Backend, Noise)
+      or
+      x = runh(Shots, Circuit, Backend, Noise, T1, T2, Gate_time)
+      or
+      x = runh(Circuit, Seed)  | Default backend / backend №0
+      or
+      x = runh(Circuit, Seed, Backend)
+      or 
+      x = runh(Circuit, Seed, Backend, Noise)
+      or
+      x = runh(Circuit, Seed, Backend, Noise, T1, T2, Gate_time)
+      or
+      x = runh(Shots, Circuit, Seed)  | Default backend / backend №0
+      or
+      x = runh(Shots, Circuit, Seed, Backend)
+      or 
+      x = runh(Shots, Circuit, Seed, Backend, Noise)
+      or
+      x = runh(Shots, Circuit, Seed, Backend, Noise, T1, T2, Gate_time)
+
+      Allowed types for x: qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, dict, map.
+      Allowed types for Circuit: circ, block, gate, matrix.
+      Allowed types for backend, T1, T2, Gate_time, Seed, Shots & Noise: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      
+
+      List of currently available Backends:
+      0. QuEST
+      
+      List of currently available Noise Models:
+      0. Depolarizing (ONLY THIS IS AVAILABLE NOW)
+      1. Damping
+      2. Depolarizing + Damping
+      3. Readout Error
+      4. Depolarizing + Damping + Readout
+
+
 65. Difference operator (reveals how smth has changed)
+      
 66. Parallel functin exec. (easy threads)
 67. Threads (hard threads)
 68. gate's in block/circuit
@@ -688,6 +995,7 @@ Operators:
 95. min gate set required for circuit
 96. do 2 circuits make same output
 97. is unitary?
+98. make circ into gate
 
 
 
