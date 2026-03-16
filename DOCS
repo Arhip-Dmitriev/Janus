@@ -1076,21 +1076,160 @@ Operators:
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       Allowed types for Lock: lock.
 
-68. gate's in block/circuit
-      Returns a list of gates 
-69. qubits in block circuit
-70. depth of block / circuit
-71. substring
-72. read file
-73. write to file
-74. standardized save format for gate, block, and circuit
-75. log
-76. sin
-77. cos
-78. pi
-79. e
-80. arcsin
-81. arccos
+68. Gates in block/circuit (gates)
+      Returns a list of all gates present in a block or circuit, in the order they appear (left to right, top to bottom).
+      Syntax: x = gates(Circuit)
+      Allowed types for x: list, set.
+      Allowed types for Target: block, circ, matrix, gate.
+      Examples:
+      mycirc = circ([1;0;0;0], [ xgate, null; igate, zgate])
+      gates(mycirc) = [xgate, igate, igate, zgate]
+
+69. Qubit Count (qubits)
+      Returns a list of qubits in a circuit, or the number of qubit lines required by a block, gate or matrix.
+      Syntax: x = qubits(Circuit)
+      Allowed types for x: list, set, qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Circuit: block, circ, matrix, gate.
+
+      Examples:
+
+      mycirc = circ([1;0;0;0], [ xgate, null; igate, zgate])
+      qubits(mycirc) = [qubit0, qubit1]
+
+      myblock = block([ xgate, null; igate, zgate])
+      qubits(myblock) = 2
+
+
+70. depth of block/circuit (depth
+      Returns the depth (number of time-steps / gate layers) of a block or circuit.
+      Syntax: x = depth(Circuit)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Circuit: block, circ, matrix, gate.
+
+      Example:
+      mycirc = circ([1;0;0;0], [ xgate, null; igate, zgate])
+      depth(mycirc) = 2
+
+71. Substring
+      Returns a substring of a string, starting at Start index (inclusive, 0-based) and ending at End index (exclusive).
+      Syntax: x = substring(String, Start, End)
+      Allowed types for x & String: qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Start & End: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      
+      Examples:
+      substring("hello world", 0, 5)   = "hello"
+      substring("hello world", 6, 11)  = "world"
+
+72. Read file (read
+      Reads the contents of a file at a given path and returns them as a string. Returns 0 if the file cannot be read.
+      Syntax: x = read(Path)
+      Allowed types for x: qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Path: qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Examples:
+      x = readf("data.txt")
+
+73. Write to file (write)
+      Writes the contents of a string to a file at a given path. Returns 1 if successful, 0 if not.
+      Syntax: x = write(Path, Content)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Path: qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Content: qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Examples:
+      x = writef("output.txt", "hello world")
+
+74. Collection to string (string)
+      Converts the contents of a Collection to a string. 1D => {1,2,3} or {"a=1","b=2","c=3"} 2D => {1,2,3;4,5,6} (elements separated by comma and rows by semi-colon)
+      Syntax: x = string(Collection)
+      
+75. Logarithm (log)
+      Returns the logarithm of a Value with a given Base. If no Base is provided, defaults to base 10.
+      Syntax: x = log(Value)
+      or
+      x = log(Value, Base)
+      Allowed types for x, Value, & Base: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      log(10) = 1
+      log(25, 5) = 2
+
+75. Natural Logarithm (ln)
+      Returns the natural logarithm of a Value.
+      Syntax: x = ln(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      ln(e()) = 1
+
+76. Sine (sin)
+      Returns the sine of an angle given in radians, or in degrees with "d" flag.
+      Syntax: 
+      x = sin(Angle)
+      or
+      x = sin(Angle,d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      sin(pi() / 2) = 1
+      sin(45, d) = 1
+      
+76. Cosine (cos)
+      Returns the cosine of an angle given in radians, or in degrees with "d" flag.
+      Syntax:
+      x = cos(Angle)
+      or
+      x = cos(Angle, d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      cos(0) = 1
+      cos(0, d) = 1
+
+78. Pi (pi)
+      A built-in constant representing the mathematical constant pi (3.14159265...). Allows specification of digits with 0 digits returning 3.
+      Syntax:
+      x = pi()
+      or
+      x = pi(Digits)
+      Allowed types for x & Digits: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Examples:
+      2 * pi() = 6.28318530...
+      2 * pi(4) = 6.2830
+
+79. Euler's number (e)
+      A built-in constant representing Euler's number (2.71828182...). Allows specification of digits with 0 digits returning 2.
+      Syntax: 
+      x = e()
+      or
+      x = e(Digits)
+      Allowed types for x & Digits: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Examples:
+      2 * e() = 5.43656365692...
+      2 * e(4) = 5.4364
+
+80. Arcsine (arcsin)
+      Returns the inverse sine of a value, in radians, or in degrees with "d" flag.
+      Syntax:
+      x = arcsin(Value)
+      or
+      x = arcsin(Value, d)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arcsin(1) = 1.57079632...
+      arcsin(1, d) = 90
+      arcsin(
+
+81. Arccosine (arccos)
+      Returns the inverse cosine of a value, in radians.
+      Syntax: x = arccos(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      arccos(1) = 0
 82. tan
 83. arctan
 84. sec
@@ -1109,6 +1248,12 @@ Operators:
 97. is unitary?
 98. make circ into gate
 99. wait in seconds
+100. round
+101. floor
+102. ceiling
+103. gatenum in circ/block
+
+COMPLEX NUMBERS
 
 
 
@@ -1146,3 +1291,5 @@ QuEST
 
 Noise Models:
 Depolarization
+
+Precision on built in constant is maximum to applicable numeric type
