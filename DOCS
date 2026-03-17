@@ -37,7 +37,9 @@ Primitives:
 
 3. Q-num (qnum)
   Defined as an number represented by a register of qubits. Can be initialised into a state defined by a n*1 matrix, its 1*n transpose, or a string representation*.
-  Numbers are encoded and stored in binary in the computational basis either with floating point or 2's complement.
+  Numbers are encoded and stored in binary in the computational basis either with floating point or 2's complement, or a mix of both storing complex numbers as 2 seperate values.
+  This means that 3 and -3 will be stored as integers, 3.14 and -3.14 as floating point values, 3 + 14i as two integer values, 3.14 + 15i & 3 + 1.41i as a floating point and an integer, and 3.14 + 1.51i as two floating points.
+  Complex numbers are stored as two qnums back-to-back in memory.
   Syntax:
   x = qnum([value])
   x = qnum(5)
@@ -45,10 +47,13 @@ Primitives:
   x = qnum(5.123)
   or
   x = qnum([state])
+  or
+  x = qnum("i",a,b) to store a + bi as a complex number.
 
 4. Phase-encoded Q-num (qnump)
   Defined as an number represented by a register of qubits. Can be initialised into a state defined by a n*1 matrix, its 1*n transpose, or a string representation*.
   Numbers are encoded and stored in the phase elemenet of the register using Quantum Fourier Transform.
+  Complex numbers are stored as two qnumps back-to-back in memory.
   Syntax:
   x = qnump([value])
   x = qnump(5)
@@ -56,10 +61,14 @@ Primitives:
   x = qnump(5.123)
   or
   x = qnump([state])
+  or
+  x = qnump("i",a,b) to store a + bi as a complex number.
 
 
 5. C-num (cnum)
   Defined as a number represented by a register of classical bits. Can be initialised to a number.
+  Values stored either with floating point or 2's complement, or a mix of both storing complex numbers as 2 seperate values.
+  Complex numbers are stored as two cnums back-to-back in memory.
   Syntax:
   x = cnum(5)
   or
@@ -68,6 +77,8 @@ Primitives:
   x = cnum(5.5)
   or
   x = 5.5
+  or
+  x = cnum("i",a,b) to store a + bi as a complex number.
 
 6. Q-string (qstr)
   Defined as a string represented by a register of qubits. Can be initialised to a string of characters.
@@ -247,9 +258,9 @@ Threads:
 Operators:
 
 1. Addition
-      Adds 2 registers
+      Adds 2 registers or collections of registers.
       Syntax: x = Register1 + Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
       or 
@@ -260,23 +271,25 @@ Operators:
 
 
 2. Subtraction
-      Subtracts Register2 from Register1 (Register1 + -(Register2))
+      Subtracts Register2 from Register1 (Register1 + -(Register2)), or element-wise across collections of registers.
       Syntax: x = Register1 - Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 3. Multiplication
-      Multiplies 2 registers.
+      Multiplies 2 registers or collections of registers.
       Syntax: x = Register1 * Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 4. Division
-      Divides Register1 by Register2
+      Divides Register1 by Register2, or element-wise across collections of registers.
       Syntax: x = Register1 / Register2
-      Example: 10 / 4 = 2.5
+      Examples: 
+      10 / 4 = 2.5
+      3 + 15i / 2 + 2i = 4.5 + 3i
       Note that this division is exact, and will return decimal values. (Maximum bit-length of x=Register1+Register2, x is rounded off at length)
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 5. Concatenation
@@ -302,46 +315,46 @@ Operators:
 
 
 6. Modulus
-      Returns the remainder incurred when attempting to divide Register1 by Register2
+      Returns the remainder incurred when attempting to divide Register1 by Register2, or element-wise across collections of registers.
       Syntax: x = Register1 % Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 7. Exponentation
-      Returns Register1 raised to the Register2-th power
+      Returns Register1 raised to the Register2-th power, or element-wise across collections of registers.
       Syntax x = Register1 ^ Register2
       Example: 5 ^ 2 => 25
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 
 8. And
-      Returns the outcome of bitwise logic operation Register1 and Register2
+      Returns the outcome of bitwise logic operation Register1 and Register2, or element-wise across collections of registers.
       Syntax x = Register1 and Register2
       Example: 5 and 3 => 1
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 9. Or
-      Returns the outcome of the bitwise logic operation Register1 or Register2
+      Returns the outcome of the bitwise logic operation Register1 or Register2, or element-wise across collections of registers.
       Syntax x = Register1 or Register2
       Example: 5 or 2 => 8
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 10. Bitwise Negation
-      Returns a binary negation of the input register.
+      Returns a binary negation of the input register, or element-wise across a collection of registers.
       Syntax x = not Register
       Example: not 5 => 2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 11. Equality
-      Returns 1-bit boolean based on whether 2 registers are numerically equal
+      Returns 1-bit boolean based on whether 2 registers are numerically equal, or element-wise across collections of registers.
       Syntax x = Register1 == Register2
       Example: 5 == 5 => 1/true
-      Allowed types for x: qubit, cbit.
-      Allowed types for Register1, & Register2: qubit, cbit, qnum, qnump, cnum.
+      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 12. Identicality
@@ -369,44 +382,46 @@ Operators:
       Allowed types for Var1 & Var2: any.
 
 15. Boolean Negation
-      Flips a boolean between 1/true and 0/false
+      Flips a boolean between 1/true and 0/false, or element-wise across a collection of booleans.
       Syntax x = !Boolean
       Example: Boolean = 1/true. !Boolean => 0/false
-      Allowed types for x & Boolean: qubit, cbit.
+      Allowed types for x & Boolean: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
 
 16. Less-than
-      Returns 1/true if Register1 is numerically less-than Register2
+      Returns 1/true if Register1 is numerically less-than Register2, or element-wise across collections of registers.
       Syntax: x = Register1 < Register2
-      Allowed types for x: qubit, cbit.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 17. Greater-than
-      Returns 1/true if Register1 is numerically greater-than Register2
+      Returns 1/true if Register1 is numerically greater-than Register2, or element-wise across collections of registers.
       Syntax: x = Register1 > Register2
-      Allowed types for x: qubit, cbit.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 18. Less-than or Equal-to
-      Returns 1/true if Register1 is numerically less-than or equal-to Register2
+      Returns 1/true if Register1 is numerically less-than or equal-to Register2, or element-wise across collections of registers.
       Syntax: x = Register1 <= Register2
-      Allowed types for x: qubit, cbit.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
-19. Less-than
-      Returns 1/true if Register1 is numerically greater-than or equal-to Register2
+19. Greater-than or Equal-to
+      Returns 1/true if Register1 is numerically greater-than or equal-to Register2, or element-wise across collections of registers.
       Syntax: x = Register1 >= Register2
-      Allowed types for x: qubit, cbit.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 20. Integer Division
-      Divides Register1 by Register2, and cuts off any decimal values
+      Divides Register1 by Register2 and cuts off any decimal values, or element-wise across collections of registers.
       Syntax: x = Register1 // Register2
-      Example: 10 // 4 => 2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Examples: 
+      10 // 4 => 2 
+      3 + 15i // 2 + 2i => 4 + 3i
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 21. Type-Checking
@@ -421,134 +436,117 @@ Operators:
       Allowed types for x: qubit, cbit.
       Allowed types for Var1 & Var2: any.
 
-23.  Left Shift
-      Bitwise shifts a register left
+23. Left Shift
+      Bitwise shifts a register left, or element-wise across a collection of registers.
       Syntax x = <<Register
-      Allowed types of register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
 
-24.  Right Shift
-      Bitwise shifts a register right
+24. Right Shift
+      Bitwise shifts a register right, or element-wise across a collection of registers.
       Syntax x = >>Register
-      Allowed types of register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
 
 25. Either-or
-      Returns the result of the bitwise operation Register1 XOR Register2
+      Returns the result of the bitwise operation Register1 XOR Register2, or element-wise across collections of registers.
       Syntax x = Register1 xor Register2
       Example: 5 xor 3 => 6
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 26. Not-and
-      Returns the result of the bitwise operation Register1 NAND Register2
-      Syntax x = Register1 xor Register2
+      Returns the result of the bitwise operation Register1 NAND Register2, or element-wise across collections of registers.
+      Syntax x = Register1 nand Register2
       Example: 5 nand 4 => 3
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 27. Not-either-or
-      Returns the result of the bitwise operation Register1 XNOR Register2
+      Returns the result of the bitwise operation Register1 XNOR Register2, or element-wise across collections of registers.
       Syntax x = Register1 xnor Register2
-      Example: 5 nand 4 => 6
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Example: 5 xnor 4 => 6
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 29. Not-or
-      Returns the result of the bitwise operation Register1 NOR Register2
+      Returns the result of the bitwise operation Register1 NOR Register2, or element-wise across collections of registers.
       Syntax x = Register1 nor Register2
-      Example: 5 nand 4 => 2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Example: 5 nor 4 => 2
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 30. Tensor
-      Returns the tensor product of two vectors
+      Returns the tensor product of two vectors or collections of vectors.
       Syntax x = Vector1 tensor Vector2
-      Allowed types for x: matrix, block, circ.
-      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Allowed types for x: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
       or
 
-      Returns the tensor product of two scalars
+      Returns the tensor product of two scalars or collections of scalars.
       Syntax x = Register1 tensor Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
-31. Comma
-      Evaluates Operand 1, then Operand 2 and returns the result of Operand 2.
-      Syntax x = Operand 1, Operand 2
-      Allowed types for x: result types for Operand 2
-      Allowed types for Operand 1 & Operand 2: an operator expression.
-      Example: x = y = 5, 10 + y | This would set y = 5 and return 15 into the value of x.
-      Example x = 10 + 5, y = 5 | This returns 1 if y is succesfully set to 5, and 0 if not.
-
-32. Assignment 
-      Set the value of Operand 1 equal to Operand 2, returns 1 if successful, 0 if not.
-      Syntax Operand 1 = Operand 2
-      Allowed types for Operand 1 & Operand 2: an operator expression.
-      Examples:
-      x = 15 (x=15) | x = y (x=y) | x = y = 5 (x=1 or 0, y=5)
-      
-
 31. Dot/Inner-Product
-      Returns the inner/dot product of two vectors.
+      Returns the inner/dot product of two vectors or collections of vectors.
       Syntax x = Vector1 dot Vector2
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       
 32. Outer Product
-      Returns the outer product of two vectors
+      Returns the outer product of two vectors or collections of vectors.
       Syntax x = Vector1 outer Vector2
-      Allowed types for x: matrix, block, circ.
-      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Allowed types for x: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 33. Cross Product
-      Returns the cross product of two vectors
+      Returns the cross product of two vectors or collections of vectors.
       Syntax x = Vector1 cross Vector2
-      Allowed types for x, Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       
 34. Trace
-      Returns the trace of matrix.
+      Returns the trace of a matrix, or element-wise across a collection of matrices.
       Syntax x = trace Matrix
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Matrix: matrix, block, circ.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 35. Measurement
-      Returns the measurement of a register in a Basis (defaults to Z), and collapses its state.
+      Returns the measurement of a register or collection of registers in a Basis (defaults to Z), and collapses its state.
       Syntax:
 
       x = measure(Register)  
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
 
       or 
 
       x = Register
-      Allowed types for x: cbit, cnum, cstr, ctrs, ctrc, cstre.
-      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre.
+      Allowed types for x: cbit, cnum, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre, list, set, map, dict, matrix, block, circ, gate, struct.
 
       or
 
       x = measure(Register, Basis)
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       Allowed types for Basis: gate, matrix, circ, block.
 
-
 37. Predicted Measurment (Quantum-peek)
-      Returns the measurement of a register, and DOES NOT collapse its state.
+      Returns the measurement of a register or collection of registers, and DOES NOT collapse its state.
       Syntax x = peek(Register)
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+
 38. Expectation Value
-      Returns the expectation value of an observable represented by a Matrix given a state represented by a Register
+      Returns the expectation value of an observable represented by a Matrix given a state represented by a Register, or element-wise across collections.
       Syntax x = expect(Matrix, Register)
-      Allowed types for Matrix: matrix, block, circ.
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 39. Reference Swap
-      Swaps the values of two references, returns 0 if successful, 1 otherwise.
+      Swaps the values of two references, or element-wise across literals of collections of references returns 0 if successful, 1 otherwise.
       Syntax x = Reference1 <-> Reference2
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       Allowed types for Reference1 & Reference2: any.
@@ -557,6 +555,24 @@ Operators:
             x = [1,2;3,4]                  x = 5
             y = 5                          y = [1,2;3,4] 
             x <-> y
+
+      Note: Element-wise collection literal reference swapping works as such:
+            The following blocks of code produce equivalent resulting program states:
+            x = [1,2;3,4]                  x = 5
+            y = 5                          y = [1,2;3,4] 
+            a = "hello"                    a = {1,2,3}
+            b = {1,2,3}                    b = "hello"
+            {x,a} <-> {y,b}
+
+      Note: The collection literals condition results in the following behaviour:
+            The following blocks of code produce equivalent resulting program states:
+            x = [1,2;3,4]                  x = [1,2;3,4] 
+            y = 5                          y = 5
+            a = "hello"                    a = "hello"
+            b = {1,2,3}                    b = {1,2,3}
+            g = {x,a}                      g = {y,b}
+            m = {y,b}                      m = {x,a}
+            g <-> m
 
 41. Collection Swap
       Returns the collection created by swapping the elements at two given indices.
@@ -590,10 +606,10 @@ Operators:
       Allowed types for x, Matrix1, & Matrix2: matrix, block, circ.
 
 47. determinant
-      Returns the determinant of a Matrix
+      Returns the determinant of a Matrix, or element-wise across a collection of matrices.
       Syntax x = det(Matrix)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Matrix: matrix, block, circ
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 49. matrix add-column
@@ -691,13 +707,13 @@ Operators:
                                   x + y}") 
 
 55. State of quantum (state)
-      Returns in normalised vector format (a,b,c,d,e) the state of a quantum register.
+      Returns in normalised vector format (a,b,c,d,e) the state of a quantum register, or element-wise across a collection of quantum registers.
       Syntax: x = state(Register)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list. 
-      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct. 
+      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre, list, set, map, dict, struct.
   
 56. type casting
-      Attempts to cast a variable of one type to another, and return the Variable as the new Type.
+      Attempts to cast a variable, or collection of variables, of one type to another, and return the Variable as the new Type.
       Syntax: x = (Type) Variable
       Allowed types for x: Any operand which may have a variable of type Type assigned to it.
       Allowed types for Type: Must be name of a type as it would appear in a list of allowed types, ie short form.
@@ -812,26 +828,25 @@ Operators:
 
 
 58. evals
-      Returns all the eigenvalues of a Matrix.
+      Returns all the eigenvalues of a Matrix, or element-wise across a collection of matrices.
       Syntax: x = evals(Matrix)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set.
-      Allowed types for Matrix: matrix, gate, block, circ
-
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Matrix: matrix, gate, block, circ, list, set, map, dict, struct.
 59. evec
-      Returns all the eigenvectors of a Matrix.
+      Returns all the eigenvectors of a Matrix, or element-wise across a collection of matrices.
       Syntax: x = evecs(Matrix)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set.
-      Allowed types for Matrix: matrix, gate, block, circ
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Matrix: matrix, gate, block, circ, list, set, map, dict, struct.
 
 60. transpose
-      Returns the transpose of a Matrix
+      Returns the transpose of a Matrix, or element-wise across a collection of matrices.
       Syntax: x = transpose(Matrix)
-      Allowed types for x & Matrix: matrix, gate, block, circ
+      Allowed types for x & Matrix: matrix, gate, block, circ, list, set, map, dict, struct.
 
 61. conjugate transpose
-      Returns the conjugate transpose of a Matrix
+      Returns the conjugate transpose of a Matrix, or element-wise across a collection of matrices.
       Syntax: x = transposec(Matrix)
-      Allowed types for x & Matrix: matrix, gate, block, circ
+      Allowed types for x & Matrix: matrix, gate, block, circ, list, set, map, dict, struct.
 
 63. find a solution to a system of equations
       Returns a solution to a system of equations.
@@ -995,10 +1010,10 @@ Operators:
       
       
 66. String difference operator  
-      Returns a string detailing how String1 can be made into String2.
+      Returns a string detailing how String1 can be made into String2, or element-wise across collections of strings.
       Syntax: x = String1 diffs String2
-      Allowed types for x, String1, String2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Note that all non-string types will be decoded and used as strings
+      Allowed types for x, String1, String2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Note that all non-string types will be decoded and used as strings.
       Examples:
       "dog" diffs "dogs" = "3s "
       "dogs" diffs "dog" = "3 "
@@ -1015,34 +1030,39 @@ Operators:
       x = parallel{funca(),funcb(),funcc()}
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       Allowed types for a, b, & c: return types for funca(), funcb(), and funcc() respectively.
-      Allowed types for funca(), funcb(), & funcc(): functions.
+      Allowed types for funca(), funcb(), & funcc(): function(s), or predfined collection(s) of functions.
 
 67. Spawn Thread (thread)
       Spawns an explicitly managed OS thread to run a function.
-      Syntax: x = thread(func,))
+      Syntax: x = thread(func())
       Allowed types for x: thread.
       Allowed types for func(): function.
 
 68. Join Thread (join)
-      Blocks the current thread until the Target thread finishes execution. Returns 1 if succesful, 0 if not.
+      Blocks the current thread until the Target thread, or all threads in a collection of target threads, finishes execution. Returns 1 if succesful, 0 if not.
       Syntax: x = join(Target)
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Target: thread
+      Allowed types for Target: thread, list, set, matrix
 
 69. Sleep Thread (sleep)
-      Pauses the target thread, Target. for a given number of milliseconds, Time. Returns Time if succesful, 0 if not.
+      Pauses the target thread or all threads in a target collection of threads, Target. for a given number of milliseconds, Time. Returns Time if succesful, 0 if not.
       Syntax: x = sleep(Target, Time)
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Target: thread.
+      Allowed types for Target: thread, list, set, matrix.
       Allowed types for Time: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 70. Thread Priority (priority)
-      Sets the scheduling priority, Level, of a thread, Thread. Returns Level if succesful, 0 if not. The default priority is 0. Priority can be negative.
-      Syntax: x = priority(Thread, Level)
+      Sets the scheduling priority, or collection of scheduling prioriteis, Level, of a thread, or all threads in a collection of threads, Thread. 
+      Returns Level if succesful, 0 if not. The default priority is 0. Priority can be negative.
+      Syntax: 
+      x = priority(Thread, Level)
+      or
+      x = priority(Thread->Level_Set)
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Thread: thread.
-      Allowed types for level: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for Thread: thread, list, set, matrix.
+      Allowed types for level: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
+      Allowed types for Thread->Level_Set: map, dict.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 71. Name Thread (name)
@@ -1142,49 +1162,53 @@ Operators:
       Syntax: x = string(Collection)
       
 75. Logarithm (log)
-      Returns the logarithm of a Value with a given Base. If no Base is provided, defaults to base 10.
+      Returns the logarithm of a Value or collection of values with a given Base. If no Base is provided, defaults to base 10.
       Syntax: x = log(Value)
       or
       x = log(Value, Base)
-      Allowed types for x, Value, & Base: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x, Value, & Base: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       Examples:
       log(10) = 1
       log(25, 5) = 2
 
 75. Natural Logarithm (ln)
-      Returns the natural logarithm of a Value.
+      Returns the natural logarithm of a Value or collection of values.
       Syntax: x = ln(Value)
-      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       Examples:
       ln(e()) = 1
 
 76. Sine (sin)
-      Returns the sine of an angle given in radians, or in degrees with "d" flag.
-      Syntax: 
+      Returns the sine of an Angle or collection of angles given in radians, or in degrees with "d" flag.
+      Syntax:
       x = sin(Angle)
       or
-      x = sin(Angle,d)
-      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      x = sin(Angle, d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       Allowed types for d: string literal "d".
       All non-numeric types will be treated as if they were (2's complement) using their register values.
+
       Examples:
       sin(pi() / 2) = 1
-      sin(45, d) = 1
+      sin(90, d) = 1
+      sin(qnum("i", 0, 1)) = 0 + 1.17520119...i
       
-76. Cosine (cos)
-      Returns the cosine of an angle given in radians, or in degrees with "d" flag.
+77. Cosine (cos)
+      Returns the cosine of an Angle or collection of angles given in radians, or in degrees with "d" flag.
       Syntax:
       x = cos(Angle)
       or
       x = cos(Angle, d)
-      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       Allowed types for d: string literal "d".
       All non-numeric types will be treated as if they were (2's complement) using their register values.
+
       Examples:
       cos(0) = 1
       cos(0, d) = 1
+      cos(qnum("i", 0, 1)) = 1.54308063... + 0i
 
 78. Pi (pi)
       A built-in constant representing the mathematical constant pi (3.14159265...). Allows specification of digits with 0 digits returning 3.
@@ -1209,35 +1233,301 @@ Operators:
       2 * e(4) = 5.4364
 
 80. Arcsine (arcsin)
-      Returns the inverse sine of a value, in radians, or in degrees with "d" flag.
+      Returns the inverse sine of a Value or collection of values, in radians, or in degrees with "d" flag.
       Syntax:
       x = arcsin(Value)
       or
       x = arcsin(Value, d)
-      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       Allowed types for d: string literal "d".
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
       Examples:
       arcsin(1) = 1.57079632...
       arcsin(1, d) = 90
-      arcsin(
+      arcsin(2) = 1.57079632... - 1.31695789...i
+      arcsin(qnum("i", 0, 1)) = 0 + 0.88137358...i
 
 81. Arccosine (arccos)
-      Returns the inverse cosine of a value, in radians.
-      Syntax: x = arccos(Value)
-      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Returns the inverse cosine of a Value or collection of values, in radians, or in degrees with "d" flag.
+      Syntax:
+      x = arccos(Value)
+      or
+      x = arccos(Value, d)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arccos(0) = 1.57079632...
+      arccos(0, d) = 90
+      arccos(2) = 0 - 1.31695789...i
+      arccos(qnum("i", 1, 1)) = 0.90455689... - 1.06127506...i
+
+82. Tangent (tan)
+      Returns the tangent of an Angle, or a collection of angles, given in radians, or in degrees with "d" flag.
+      Syntax:
+      x = tan(Angle)
+      or
+      x = tan(Angle, d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      tan(0) = 0
+      tan(pi() / 4) = 1
+      tan(45, d) = 1
+      tan(qnum("i", 0, 1)) = 0 + 0.76159415...i
+
+83. Arctangent (arctan)
+      Returns the inverse tangent of a Value or collection of values, in radians, or in degrees with "d" flag.
+      Syntax:
+      x = arctan(Value)
+      or
+      x = arctan(Value, d)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arctan(1) = 0.78539816...
+      arctan(1, d) = 45
+      arctan(0) = 0
+      arctan(qnum("i", 2, 1)) = 1.17809724... + 0.17328679...i
+
+84. Secant (sec)
+      Returns the secant of an Angle, or collection of angles, given in radians, or in degrees with "d" flag.
+      Syntax:
+      x = sec(Angle)
+      or
+      x = sec(Angle, d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       Examples:
-      arccos(1) = 0
-82. tan
-83. arctan
-84. sec
-85. arcsec
-86. csc
-87. arccsc
-88. sinh
-89. cosh
+      sec(0) = 1
+      sec(pi() / 3) = 2
+      sec(60, d) = 2
+      sec(qnum("i", 0, 1)) = 0.64805427... + 0i
+
+85. Arcsecant (arcsec)
+      Returns the inverse secant of a Value or collection of values, in radians, or in degrees with "d" flag.
+      Syntax:
+      x = arcsec(Value)
+      or
+      x = arcsec(Value, d)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arcsec(2) = 1.04719755...
+      arcsec(2, d) = 60
+      arcsec(1) = 0
+      arcsec(0.5) = 0 + 1.31695789...i
+
+86. Cosecant (csc)
+      Returns the cosecant of an Angle or collection of angles given in radians, or in degrees with "d" flag.
+      Syntax:
+      x = csc(Angle)
+      or
+      x = csc(Angle, d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      csc(pi() / 2) = 1
+      csc(90, d) = 1
+      csc(pi() / 6) = 2
+      csc(qnum("i", 0, 1)) = 0 - 0.85091812...i
+
+87. Arccosecant (arccsc)
+      Returns the inverse cosecant of a Value or collection of values, in radians, or in degrees with "d" flag.
+      Syntax:
+      x = arccsc(Value)
+      or
+      x = arccsc(Value, d)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      arccsc(1) = 1.57079632...
+      arccsc(1, d) = 90
+      arccsc(2) = 0.52359877...
+      arccsc(0.5) = 1.57079632... - 1.31695789...i
+
+88. Hyperbolic Sine (sinh)
+      Returns the hyperbolic sine of a Value or collection of values.
+      Syntax:
+      x = sinh(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      sinh(0) = 0
+      sinh(1) = 1.17520119...
+      sinh(qnum("i", 0, 1)) = 0 + 0.84147098...i
+
+89. Hyperbolic Cosine (cosh)
+      Returns the hyperbolic cosine of a Value or collection of values.
+      Syntax:
+      x = cosh(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      cosh(0) = 1
+      cosh(1) = 1.54308063...
+      cosh(qnum("i", 0, 1)) = 0.54030230... + 0i
+
+90. Hyperbolic Tangent (tanh)
+      Returns the hyperbolic tangent of a Value, or collection of values.
+      Syntax:
+      x = tanh(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      tanh(0) = 0
+      tanh(1) = 0.76159415...
+      tanh(qnum("i", 0, 1)) = 0 + 1.55740772...i
+
+91. Hyperbolic Secant (sech)
+      Returns the hyperbolic secant of a Value, or collection of values.
+      Syntax:
+      x = sech(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      sech(0) = 1
+      sech(1) = 0.64805427...
+      sech(qnum("i", 0, 1)) = 1.85081571... + 0i
+
+92. Hyperbolic Cosecant (csch)
+      Returns the hyperbolic cosecant of a Value, or a collection of values.
+      Syntax:
+      x = csch(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      csch(1) = 0.85091812...
+      csch(qnum("i", 0, 1)) = 0 - 1.18839510...i
+
+93. Hyperbolic Cotangent (coth)
+      Returns the hyperbolic cotangent of a Value, or collection of values.
+      Syntax:
+      x = coth(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      coth(1) = 1.31303528...
+      coth(qnum("i", 0, 1)) = 0 - 0.64209261...i
+
+94. Inverse Hyperbolic Sine (arcsinh)
+      Returns the inverse hyperbolic sine of a Value, or collection of values.
+      Syntax:
+      x = arcsinh(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arcsinh(0) = 0
+      arcsinh(1) = 0.88137358...
+      arcsinh(qnum("i", 0, 1)) = 0 + 1.57079632...i
+
+95. Inverse Hyperbolic Cosine (arccosh)
+      Returns the inverse hyperbolic cosine of a Value, or collection of values.
+      Syntax:
+      x = arccosh(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arccosh(1) = 0
+      arccosh(2) = 1.31695789...
+      arccosh(0.5) = 0 + 1.04719755...i
+
+96. Inverse Hyperbolic Tangent (arctanh)
+      Returns the inverse hyperbolic tangent of a Value, or collection of values.
+      Syntax:
+      x = arctanh(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arctanh(0) = 0
+      arctanh(0.5) = 0.54930614...
+      arctanh(2) = 0.54930614... + 1.57079632...i
+
+97. Inverse Hyperbolic Secant (arcsech)
+      Returns the inverse hyperbolic secant of a Value, or collection of values.
+      Syntax:
+      x = arcsech(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arcsech(1) = 0
+      arcsech(0.5) = 1.31695789...
+      arcsech(2) = 0 + 1.04719755...i
+
+98. Inverse Hyperbolic Cosecant (arccsch)
+      Returns the inverse hyperbolic cosecant of a Value, or collection of values.
+      Syntax:
+      x = arccsch(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arccsch(1) = 0.88137358...
+      arccsch(2) = 0.48121182...
+      arccsch(qnum("i", 0, 1)) = 0 - 1.57079632...i
+
+99. Inverse Hyperbolic Cotangent (arccoth)
+      Returns the inverse hyperbolic cotangent of a Value, or collection of values.
+      Syntax:
+      x = arccoth(Value)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+      Examples:
+      arccoth(2) = 0.54930614...
+      arccoth(0.5) = 0.54930614... + 1.57079632...i
+
+100. Cotangent (cot)
+      Returns the cotangent of an Angle, or collection of angles, given in radians, or in degrees with "d" flag.
+      Syntax:
+      x = cot(Angle)
+      or
+      x = cot(Angle, d)
+      Allowed types for x & Angle: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      cot(pi() / 4) = 1
+      cot(45, d) = 1
+      cot(qnum("i", 0, 1)) = 0 - 1.31303528...i
+
+101. Arccotangent (arccot)
+      Returns the inverse cotangent of a Value, or collection of values, in radians, or in degrees with "d" flag.
+      Syntax:
+      x = arccot(Value)
+      or
+      x = arccot(Value, d)
+      Allowed types for x & Value: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for d: string literal "d".
+      All non-numeric types will be treated as if they were (2's complement) using their register values.
+      Examples:
+      arccot(1) = 0.78539816...
+      arccot(1, d) = 45
+      arccot(0) = 1.57079632...
+      arccot(qnum("i", 0, 2)) = 0 - 0.54930614...i
+
+
 90. mean
 91. variance
 92. standard deviation
@@ -1252,8 +1542,6 @@ Operators:
 101. floor
 102. ceiling
 103. gatenum in circ/block
-
-COMPLEX NUMBERS
 
 
 
@@ -1272,8 +1560,12 @@ Function Definitions
 Library Definition and Use
 
 ADD BIT LIMITS TO ALL TYPE DEFS!!
+Need a function type
 
 BACKEND INFORMATION:
+CONSIDER MOVING TO C FOR LATENCY
+
+
 Transpilation Targets:
 Qiskit, OpenQASM, PennyLane
 
