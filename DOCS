@@ -260,7 +260,7 @@ Operators:
 1. Addition
       Adds 2 registers or collections of registers.
       Syntax: x = Register1 + Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
       or 
@@ -273,13 +273,13 @@ Operators:
 2. Subtraction
       Subtracts Register2 from Register1 (Register1 + -(Register2)), or element-wise across collections of registers.
       Syntax: x = Register1 - Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 3. Multiplication
       Multiplies 2 registers or collections of registers.
       Syntax: x = Register1 * Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 4. Division
@@ -289,20 +289,20 @@ Operators:
       10 / 4 = 2.5
       3 + 15i / 2 + 2i = 4.5 + 3i
       Note that this division is exact, and will return decimal values. (Maximum bit-length of x=Register1+Register2, x is rounded off at length)
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 5. Concatenation
       Combines 2 collections
       Syntax: x = Collection1 + Collection2
-      Allowed types for x, Collection1, & Collection2: List, Set, Map
+      Allowed types for x, Collection1, & Collection2: List, Set, Map, Dict
       Example: [1,2,3] + [3,2,1] -> [1,2,3,3,2,1]
 
       or
 
       Adds an Element to a Collection
       Syntax: x = Collection + Element
-      Allowed types for x, & Collection: List, Set, Map
+      Allowed types for x, & Collection: List, Set, Map, Dict
       Allowed types for Element: any
       Example: [1,2,3] + 4 -> [1,2,3,4]
 
@@ -317,14 +317,14 @@ Operators:
 6. Modulus
       Returns the remainder incurred when attempting to divide Register1 by Register2, or element-wise across collections of registers.
       Syntax: x = Register1 % Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 7. Exponentation
       Returns Register1 raised to the Register2-th power, or element-wise across collections of registers.
       Syntax x = Register1 ^ Register2
       Example: 5 ^ 2 => 25
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 
@@ -332,29 +332,29 @@ Operators:
       Returns the outcome of bitwise logic operation Register1 and Register2, or element-wise across collections of registers.
       Syntax x = Register1 and Register2
       Example: 5 and 3 => 1
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 9. Or
       Returns the outcome of the bitwise logic operation Register1 or Register2, or element-wise across collections of registers.
       Syntax x = Register1 or Register2
       Example: 5 or 2 => 8
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 10. Bitwise Negation
       Returns a binary negation of the input register, or element-wise across a collection of registers.
       Syntax x = not Register
       Example: not 5 => 2
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 11. Equality
       Returns 1-bit boolean based on whether 2 registers are numerically equal, or element-wise across collections of registers.
       Syntax x = Register1 == Register2
       Example: 5 == 5 => 1/true
-      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x: qubit, cbit, list, set, matrix.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, list, set, map, dict, matrix, block, circ, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 12. Identicality
@@ -385,34 +385,34 @@ Operators:
       Flips a boolean between 1/true and 0/false, or element-wise across a collection of booleans.
       Syntax x = !Boolean
       Example: Boolean = 1/true. !Boolean => 0/false
-      Allowed types for x & Boolean: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x & Boolean: qubit, cbit, list, set, matrix.
 
 16. Less-than
       Returns 1/true if Register1 is numerically less-than Register2, or element-wise across collections of registers.
       Syntax: x = Register1 < Register2
-      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x: qubit, cbit, list, set, matrix.
       Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 17. Greater-than
       Returns 1/true if Register1 is numerically greater-than Register2, or element-wise across collections of registers.
       Syntax: x = Register1 > Register2
-      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x: qubit, cbit, list, set, matrix.
       Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 18. Less-than or Equal-to
       Returns 1/true if Register1 is numerically less-than or equal-to Register2, or element-wise across collections of registers.
       Syntax: x = Register1 <= Register2
-      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x: qubit, cbit, list, set, list, set, matrix.
       Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 19. Greater-than or Equal-to
       Returns 1/true if Register1 is numerically greater-than or equal-to Register2, or element-wise across collections of registers.
       Syntax: x = Register1 >= Register2
-      Allowed types for x: qubit, cbit, list, set, map, dict, matrix, block, circ, gate, struct.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x: qubit, cbit, list, set, list, set, matrix.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 20. Integer Division
@@ -421,7 +421,7 @@ Operators:
       Examples: 
       10 // 4 => 2 
       3 + 15i // 2 + 2i => 4 + 3i
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 21. Type-Checking
@@ -439,65 +439,64 @@ Operators:
 23. Left Shift
       Bitwise shifts a register left, or element-wise across a collection of registers.
       Syntax x = <<Register
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
-
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
 24. Right Shift
       Bitwise shifts a register right, or element-wise across a collection of registers.
       Syntax x = >>Register
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
 
 25. Either-or
       Returns the result of the bitwise operation Register1 XOR Register2, or element-wise across collections of registers.
       Syntax x = Register1 xor Register2
       Example: 5 xor 3 => 6
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 26. Not-and
       Returns the result of the bitwise operation Register1 NAND Register2, or element-wise across collections of registers.
       Syntax x = Register1 nand Register2
       Example: 5 nand 4 => 3
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 27. Not-either-or
       Returns the result of the bitwise operation Register1 XNOR Register2, or element-wise across collections of registers.
       Syntax x = Register1 xnor Register2
       Example: 5 xnor 4 => 6
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 29. Not-or
       Returns the result of the bitwise operation Register1 NOR Register2, or element-wise across collections of registers.
       Syntax x = Register1 nor Register2
       Example: 5 nor 4 => 2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 30. Tensor
       Returns the tensor product of two vectors or collections of vectors.
       Syntax x = Vector1 tensor Vector2
-      Allowed types for x: matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for x: matrix, block, circ, list, set, gate, struct.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
       or
 
       Returns the tensor product of two scalars or collections of scalars.
       Syntax x = Register1 tensor Register2
-      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Register1, & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 31. Dot/Inner-Product
       Returns the inner/dot product of two vectors or collections of vectors.
       Syntax x = Vector1 dot Vector2
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       
 32. Outer Product
       Returns the outer product of two vectors or collections of vectors.
       Syntax x = Vector1 outer Vector2
-      Allowed types for x: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for x: matrix, block, circ, list, set, gate.
       Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
@@ -511,7 +510,7 @@ Operators:
       Returns the trace of a matrix, or element-wise across a collection of matrices.
       Syntax x = trace Matrix
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
-      Allowed types for Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Matrix: matrix, block, circ, list, set, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 35. Measurement
@@ -524,25 +523,25 @@ Operators:
       or 
 
       x = Register
-      Allowed types for x: cbit, cnum, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
-      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x: cbit, cnum, cstr, ctrs, ctrc, cstre, list, set, matrix.
+      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre, list, set, matrix.
 
       or
 
       x = measure(Register, Basis)
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
-      Allowed types for Basis: gate, matrix, circ, block.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
+      Allowed types for Basis: gate, matrix, circ, block, gate.
 
 37. Predicted Measurment (Quantum-peek)
       Returns the measurement of a register or collection of registers, and DOES NOT collapse its state.
       Syntax x = peek(Register)
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
 
 38. Expectation Value
       Returns the expectation value of an observable represented by a Matrix given a state represented by a Register, or element-wise across collections.
       Syntax x = expect(Matrix, Register)
-      Allowed types for Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Matrix: matrix, block, circ, list, set, gate.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 39. Reference Swap
