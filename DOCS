@@ -596,14 +596,14 @@ Operators:
       Allowed types for Element: any
       
 45. Matrix subtraction
-      Returns the result of the subtraction of Matrix1 from Matrix2
+      Returns the result of the subtraction of Matrix1 from Matrix2, or element-wise across collections of matrices.
       Syntax x = Matrix2 - Matrix1
-      Allowed types for x, Matrix1, & Matrix2: matrix, block, circ.
+      Allowed types for x, Matrix1, & Matrix2: matrix, list, set.
       
-46. Matrix multiplicaiton
-      Returns the product of Matrix1 and Matrix2
+46. Matrix multiplication
+      Returns the product of Matrix1 and Matrix2, or element-wise across collections of matrices.
       Syntax x = Matrix2 * Matrix1
-      Allowed types for x, Matrix1, & Matrix2: matrix, block, circ.
+      Allowed types for x, Matrix1, & Matrix2: matrix, list, set.
 
 47. determinant
       Returns the determinant of a Matrix, or element-wise across a collection of matrices.
@@ -613,7 +613,7 @@ Operators:
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 49. matrix add-column
-      Returns the result of adding a column/Vector to a Matrix
+      Returns the result of adding a column/Vector to a Matrix, or element-wise across collections of matrices and vectors.
       Syntax:
       x = addcolumn(Matrix, Vector)
       or
@@ -634,13 +634,13 @@ Operators:
       addcolumn(y,x,1) =>      | 1 5 2 |
                                | 3 6 4 |
 
-      Allowed types for x & Matrix: matrix, block, circ.
-      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
-      Allowed types for Column-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.*
+      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Column-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.*
       *All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 50. matrix add-row
-      Returns the result of adding a row/Row-Vector to a Matrix
+      Returns the result of adding a row/Row-Vector to a Matrix, or element-wise across collections of matrices and row-vectors.
       Syntax:
       x = addrow(Matrix, Row-Vector)
       or
@@ -664,23 +664,23 @@ Operators:
                         | 5 6 |
                         | 3 4 |
 
-      Allowed types for x & Matrix: matrix, block, circ.
-      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
-      Allowed types for Row-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.*
+      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Row-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.*
       *All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 52. matrix delete row
-      Returns the matrix produced by removing a specified Row of a Matrix.
-      Syntax x = deleterow(Matrix,Row)
-      Allowed types for x & Matrix: matrix, block, circ.
-      Allowed types for Row: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Returns the matrix produced by removing a specified Row of a Matrix, or element-wise across collections of matrices and row indices.
+      Syntax x = deleterow(Matrix, Row)
+      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Row: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 53. matrix delete column
-      Returns the matrix produced by removing a specified Column of a Matrix.
-      Syntax x = deletecolumn(Matrix,Column)
-      Allowed types for x & Matrix: matrix, block, circ.
-      Allowed types for Column: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Returns the matrix produced by removing a specified Column of a Matrix, or element-wise across collections of matrices and column indices.
+      Syntax x = deletecolumn(Matrix, Column)
+      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Column: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 54. print
@@ -722,10 +722,10 @@ Operators:
       Note that there are a number of conversion whose methods are specified in this documentation, and all others will simply cast bitwise.
       
 57. exclusive make gate control 
-      Converts a quantum of gate of n qubits to be n+i qubits and treat the new i qubits as a control
+      Converts a quantum gate of n qubits to be n+i qubits and treat the new i qubits as a control, or element-wise across collections of gates and control qubit counts.
       Syntax: x = ctrle(Gate, Control Qubits)
-      Allowed types for x & Gate: Gate, Matrix, block, circ.
-      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Allowed types for x & Gate: gate, matrix, block, circ, list, set, map, dict, struct.
+      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
       Examples:
       a =    [1 0 0 0 0 0 0 0]
              [0 1 0 0 0 0 0 0]
@@ -790,10 +790,10 @@ Operators:
             
 
 58. inclusive make gate control
-      Converts a quantum gate of n qubits to be n qubits and treat some qubits within the gate as control, and still act on these qubits.
+      Converts a quantum gate of n qubits to be n qubits and treat some qubits within the gate as control, and still act on these qubits. Operates element-wise across collections of gates and control qubit indices.
       Syntax: x = ctrli(Gate, Control Qubits)
-      Allowed types for x & Gate: Gate, Matrix, block, circ.
-      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ.
+      Allowed types for x & Gate: gate, matrix, block, circ, list, set, map, dict, struct.
+      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
       Examples:
       a = H⊗H⊗H 
             [  1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2)   1/(2√2) ]
@@ -824,7 +824,6 @@ Operators:
             [        0         0         0         0         0   1/(2√2)         0   1/(2√2) ]
             [        0         0         0         0         0  -1/(2√2)         1   1/(2√2) ]
             [        0         0         0         0         0   1/(2√2)         0  -1/(2√2) ]
-            
 
 
 58. evals
@@ -849,11 +848,11 @@ Operators:
       Allowed types for x & Matrix: matrix, gate, block, circ, list, set, map, dict, struct.
 
 63. find a solution to a system of equations
-      Returns a solution to a system of equations.
+      Returns a solution to a system of equations, or element-wise across a collection of systems of equations.
       Syntax: x = solvep({Equations},{Variables})
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map. 
-      Allowed types for Equations: A list or set of strings containing equations written according to this documentation, or one such equation as a string.
-      Allowed types for Variables: A list or set of strings containing all of the well-defined variables appearing in the equations, or one such variable as a string.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map, gate, struct. 
+      Allowed types for Equations: A list or set of strings containing equations written according to this documentation, or one such equation as a string. A collection of such lists or sets for element-wise solving.
+      Allowed types for Variables: A list or set of strings containing all of the well-defined variables appearing in the equations, or one such variable as a string. A collection of such lists or sets for element-wise solving.
       Examples:
 
       x = solvep({"x+1=10"},{"x"}) = solvep("x+1=10","x") = 9 = "x=9" = {"x=9"}
@@ -862,24 +861,24 @@ Operators:
       x = solvep({"x^2 + y^2 = 25", "x + y = 7"},{"x","y"}) = {"x=3, y=4" or "x=4, y=3"} = "x=3, y=4" or "x=4, y=3"
 
 64. find all solutions to a system of equations
-      Returns all possible solutions to a system of equations.
+      Returns all possible solutions to a system of equations, or element-wise across a collection of systems of equations.
       Syntax: x = solvea({Equations},{Variables})
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map.
-      Allowed types for Equations: A list or set of strings containing equations written according to this documentation, or one such equation as a string.
-      Allowed types for Variables: A list or set of strings containing all of the well-defined variables appearing in the equations, or one such variable as a string.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, dict, set, map, gate, struct.
+      Allowed types for Equations: A list or set of strings containing equations written according to this documentation, or one such equation as a string. A collection of such lists or sets for element-wise solving.
+      Allowed types for Variables: A list or set of strings containing all of the well-defined variables appearing in the equations, or one such variable as a string. A collection of such lists or sets for element-wise solving.
       Examples:
 
       x = solvea({"x+1=10"},{"x"}) = solvea("x+1=10","x") = 9 = "x=9" = {"x=9"}
       x = solvea({"x+1=y","y*x=90"},{"x","y"}) = solvea({"x+1=y","y*x=90","y+z=10","z=10-y"},{"x","y"}) = {"x=9, y=10"} = "x=9, y=10"
       x = solvea({"x^2 - 5*x + 6 = 0"},{"x"}) = {"x=2","x=3"} = "x=2, x=3"
       x = solvea({"x^2 + y^2 = 25", "x + y = 7"},{"x","y"}) = {"x=3, y=4", "x=4, y=3"} = "x=3, y=4; x=4, y=3"
-      
+
 
 64. Run circuit
-      Run a quantum Circuit with selected backend paramaters and return resulting register
+      Run a quantum Circuit or collection of quantum Circuits with selected backend parameters and return resulting register or collection of resulting registers.
       Circuit = quantum circuit, Backend = Simulator Model, Noise = Noise model, T1 = vector/list of energy relaxation time per qubit in ms, T2 = vector/list of dephasing time per qubit in ms, gate time = matrix of time in takes to apply each gate to each qubit in ms
       Note that t1,t2, & gate_time can be set to lower dimensional types to mean equality, meaning that they can all be numerical types and vector types, with loss of complexity.
-      Additionally, T2, T2, & Gate time are optional, dependent on the noise model.
+      Additionally, T1, T2, & Gate time are optional, dependent on the noise model.
       Backend and Noise are selected via number.
       RNG seeding is available for result reproduction.
       You may include shots to run the simulation a number of times, this will return the most common resulting register.
@@ -917,9 +916,10 @@ Operators:
       or
       x = run(Shots, Circuit, Seed, Backend, Noise, T1, T2, Gate_time)
 
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Circuit: circ, block, gate, matrix.
-      Allowed types for backend, T1, T2, Gate_time, Seed, Shots & Noise: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Circuit: circ, block, gate, matrix, list, set, map, dict, struct.
+      Allowed types for Backend, Noise, Seed, & Shots: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for T1, T2, & Gate_time: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, struct.
       
 
       List of currently available Backends:
@@ -933,13 +933,13 @@ Operators:
       4. Depolarizing + Damping + Readout
 
 65. Run circuit with histogram
-      Run a quantum Circuit with selected backend paramaters and return a histogram or resulting registers.
+      Run a quantum Circuit or collection of quantum Circuits with selected backend parameters and return a histogram or collection of histograms of resulting registers.
       Circuit = quantum circuit, Backend = Simulator Model, Noise = Noise model, T1 = vector/list of energy relaxation time per qubit in ms, T2 = vector/list of dephasing time per qubit in ms, gate time = matrix of time in takes to apply each gate to each qubit in ms
       Note that t1,t2, & gate_time can be set to lower dimensional types to mean equality, meaning that they can all be numerical types and vector types, with loss of complexity.
-      Additionally, T2, T2, & Gate time are optional, dependent on the noise model.
+      Additionally, T1, T2, & Gate time are optional, dependent on the noise model.
       Backend and Noise are selected via number.
       RNG seeding is available for result reproduction.
-      You may include shots to run the simulation a number of times, this will return the a histogram or resulting registers.
+      You may include shots to run the simulation a number of times, this will return a histogram or resulting registers.
       If you wish to recieve the most common result instead, use 'Run circuit' or 'run()' instead.
       Syntax: 
       x = runh(Circuit)  | Default backend / backend №0
@@ -974,9 +974,10 @@ Operators:
       or
       x = runh(Shots, Circuit, Seed, Backend, Noise, T1, T2, Gate_time)
 
-      Allowed types for x: qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, dict, map.
-      Allowed types for Circuit: circ, block, gate, matrix.
-      Allowed types for backend, T1, T2, Gate_time, Seed, Shots & Noise: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Allowed types for x: qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, dict, map, struct.
+      Allowed types for Circuit: circ, block, gate, matrix, list, set, map, dict, struct.
+      Allowed types for Backend, Noise, Seed, & Shots: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for T1, T2, & Gate_time: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, struct.
       
 
       List of currently available Backends:
@@ -988,7 +989,6 @@ Operators:
       2. Depolarizing + Damping
       3. Readout Error
       4. Depolarizing + Damping + Readout
-
 
 65. Difference operator
       Returns an output detailing how two references of the same or comparable types are different. It does so numerical for numerical types, lexographically for string types, and by element for collections.
@@ -1033,83 +1033,87 @@ Operators:
       Allowed types for funca(), funcb(), & funcc(): function(s), or predfined collection(s) of functions.
 
 67. Spawn Thread (thread)
-      Spawns an explicitly managed OS thread to run a function.
+      Spawns an explicitly managed OS thread to run a function, or spawns a collection of threads from a collection of functions.
       Syntax: x = thread(func())
-      Allowed types for x: thread.
-      Allowed types for func(): function.
+      Allowed types for x: thread, list, set, map, dict, struct.
+      Allowed types for func(): function, list, set, map, dict, struct.
 
 68. Join Thread (join)
       Blocks the current thread until the Target thread, or all threads in a collection of target threads, finishes execution. Returns 1 if succesful, 0 if not.
       Syntax: x = join(Target)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Target: thread, list, set, matrix
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Target: thread, list, set, map, dict, matrix, struct.
 
 69. Sleep Thread (sleep)
-      Pauses the target thread or all threads in a target collection of threads, Target. for a given number of milliseconds, Time. Returns Time if succesful, 0 if not.
+      Pauses the target thread or all threads in a target collection of threads, Target, for a given number of milliseconds, Time. Returns Time if succesful, 0 if not.
       Syntax: x = sleep(Target, Time)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Target: thread, list, set, matrix.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Target: thread, list, set, map, dict, matrix, struct.
       Allowed types for Time: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 70. Thread Priority (priority)
-      Sets the scheduling priority, or collection of scheduling prioriteis, Level, of a thread, or all threads in a collection of threads, Thread. 
+      Sets the scheduling priority, or collection of scheduling priorities, Level, of a thread, or all threads in a collection of threads, Thread. 
       Returns Level if succesful, 0 if not. The default priority is 0. Priority can be negative.
       Syntax: 
       x = priority(Thread, Level)
       or
       x = priority(Thread->Level_Set)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Thread: thread, list, set, matrix.
-      Allowed types for level: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Thread: thread, list, set, map, dict, matrix, struct.
+      Allowed types for Level: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, struct.
       Allowed types for Thread->Level_Set: map, dict.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 71. Name Thread (name)
-      Assign a name, String, to a thread, Thread. Returns name if successful, "" if not.
-      Syntax: x = name(Thread, String)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Thread: thread.
-      Allowed types for String: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
+      Assigns a name, String, to a thread, Thread, or element-wise across a collection of threads and a collection of names. Returns name if successful, "" if not.
+      Syntax: 
+      x = name(Thread, String)
+      or
+      x = name(Thread->String_Set)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Thread: thread, list, set, map, dict, matrix, struct.
+      Allowed types for String: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Thread->String_Set: map, dict.
 
 72. Interrupt Thread (interrupt)
-      Sends an interrupt signal to the Target thread. Returns 1 if successful, 0 if not.
+      Sends an interrupt signal to the Target thread, or to all threads in a collection of target threads. Returns 1 if successful, 0 if not.
       Syntax: x = interrupt(Target)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Target: thread.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Target: thread, list, set, map, dict, matrix, struct.
 
 73. Scoped Lock (synchronized)
-      Locks the Lock for the duration of a block, automatically releasing on exit. Returns 1 if successful, 0 if not.
+      Locks the Lock or all locks in a collection of locks for the duration of a block, automatically releasing on exit. Returns 1 if successful, 0 if not.
       Syntax: x = synchronized(Lock) { ... }
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Lock: lock.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Lock: lock, list, set, map, dict, struct.
 
 74. Lock Mutex (lock)
-      Explicilty acquires/locks a Lock. Returns 1 if successful, 0 if not.
+      Explicitly acquires/locks a Lock, or all locks in a collection of locks. Returns 1 if successful, 0 if not.
       Syntax: x = lock(Lock)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Lock: lock.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Lock: lock, list, set, map, dict, struct.
 
 75. Unlock Mutex (unlock)
-      Explicitly releases/unlocks a Lock. Returns 1 if successful, 0 if not.
+      Explicitly releases/unlocks a Lock, or all locks in a collection of locks. Returns 1 if successful, 0 if not.
       Syntax: x = unlock(Lock)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Lock: lock.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Lock: lock, list, set, map, dict, struct.
 
 68. Gates in block/circuit (gates)
-      Returns a list of all gates present in a block or circuit, in the order they appear (left to right, top to bottom).
+      Returns a list of all gates present in a block or circuit, in the order they appear (left to right, top to bottom), or element-wise across a collection of blocks or circuits.
       Syntax: x = gates(Circuit)
-      Allowed types for x: list, set.
-      Allowed types for Target: block, circ, matrix, gate.
+      Allowed types for x: list, set, map, dict, struct.
+      Allowed types for Circuit: block, circ, matrix, gate, list, set, map, dict, struct.
       Examples:
       mycirc = circ([1;0;0;0], [ xgate, null; igate, zgate])
       gates(mycirc) = [xgate, igate, igate, zgate]
 
 69. Qubit Count (qubits)
-      Returns a list of qubits in a circuit, or the number of qubit lines required by a block, gate or matrix.
+      Returns a list of qubits in a circuit, or the number of qubit lines required by a block, gate or matrix. Operates element-wise across collections of circuits, blocks, gates, or matrices.
       Syntax: x = qubits(Circuit)
-      Allowed types for x: list, set, qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Circuit: block, circ, matrix, gate.
+      Allowed types for x: list, set, qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, map, dict, struct.
+      Allowed types for Circuit: block, circ, matrix, gate, list, set, map, dict, struct.
 
       Examples:
 
@@ -1119,12 +1123,11 @@ Operators:
       myblock = block([ xgate, null; igate, zgate])
       qubits(myblock) = 2
 
-
-70. depth of block/circuit (depth
-      Returns the depth (number of time-steps / gate layers) of a block or circuit.
+70. depth of block/circuit (depth)
+      Returns the depth (number of time-steps / gate layers) of a block or circuit, or element-wise across a collection of blocks or circuits.
       Syntax: x = depth(Circuit)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre.
-      Allowed types for Circuit: block, circ, matrix, gate.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for Circuit: block, circ, matrix, gate, list, set, map, dict, struct.
 
       Example:
       mycirc = circ([1;0;0;0], [ xgate, null; igate, zgate])
@@ -1564,6 +1567,17 @@ Need a function type
 
 BACKEND INFORMATION:
 CONSIDER MOVING TO C FOR LATENCY
+
+To do list:
+remove map and dict and etc. from where they dont belong
+add function type
+add remiaining operands
+add bit limits
+review all
+consider moving to C
+answer all remaining spec. questions
+implment
+
 
 
 Transpilation Targets:
