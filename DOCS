@@ -255,6 +255,46 @@ Threads:
       Syntax:
       x = lock()
 
+Other:
+
+1. Function (function)
+    A reproducible grouping of code with variable Parameters that returns a variable, A.
+    Syntax: 
+
+x = function(Parameters) {
+	Code
+	Code
+	Code
+	…
+	A = 3
+	Return A
+} 
+
+B = x(Parameters) => would set B = 3.
+
+    Notes: There is no need to specify a return type in the function header.
+	    The name of this function is x
+	    Parameters are listed separated by commas by name only
+	    To specify parameter type initialize it to a variable within the function
+	    The start and end of the function is defined only by {}
+	     Parameters and return types are passed by value only, as literals with no implicit type definition
+   Examples:
+ Function ‘sum()’ to calculate sum of numerical types a & b
+ Function ‘sum2()’ to calculate sum of cnum types a & b
+
+sum = function(a,b) {
+	return a + b
+}
+x = sum(2,3) sets x to 5.
+
+sum2 = function(a,b) {
+	var1 = cnum(a)
+	var2 = cnum(b)
+	return var1 + var2
+}
+	x = sum2(2,3) sets x to 5.
+
+
 Operators:
 
 1. Addition
@@ -354,7 +394,7 @@ Operators:
       Syntax x = Register1 == Register2
       Example: 5 == 5 => 1/true
       Allowed types for x: qubit, cbit, list, set, matrix.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, list, set, map, dict, matrix, block, circ, gate.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, list, set, matrix, block, circ, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 12. Identicality
@@ -391,28 +431,28 @@ Operators:
       Returns 1/true if Register1 is numerically less-than Register2, or element-wise across collections of registers.
       Syntax: x = Register1 < Register2
       Allowed types for x: qubit, cbit, list, set, matrix.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 17. Greater-than
       Returns 1/true if Register1 is numerically greater-than Register2, or element-wise across collections of registers.
       Syntax: x = Register1 > Register2
       Allowed types for x: qubit, cbit, list, set, matrix.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 18. Less-than or Equal-to
       Returns 1/true if Register1 is numerically less-than or equal-to Register2, or element-wise across collections of registers.
       Syntax: x = Register1 <= Register2
       Allowed types for x: qubit, cbit, list, set, list, set, matrix.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set,  matrix, block, circ, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 19. Greater-than or Equal-to
       Returns 1/true if Register1 is numerically greater-than or equal-to Register2, or element-wise across collections of registers.
       Syntax: x = Register1 >= Register2
       Allowed types for x: qubit, cbit, list, set, list, set, matrix.
-      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix.
+      Allowed types for Register1 & Register2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate,.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 20. Integer Division
@@ -497,19 +537,19 @@ Operators:
       Returns the outer product of two vectors or collections of vectors.
       Syntax x = Vector1 outer Vector2
       Allowed types for x: matrix, block, circ, list, set, gate.
-      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, list, set.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 33. Cross Product
       Returns the cross product of two vectors or collections of vectors.
       Syntax x = Vector1 cross Vector2
-      Allowed types for x, Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x, Vector1 & Vector2: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, matrix.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
       
 34. Trace
       Returns the trace of a matrix, or element-wise across a collection of matrices.
       Syntax x = trace Matrix
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set.
       Allowed types for Matrix: matrix, block, circ, list, set, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
@@ -518,7 +558,7 @@ Operators:
       Syntax:
 
       x = measure(Register)  
-      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, matrix, block, circ, gate, struct.
+      Allowed types for x & Register: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
 
       or 
 
@@ -589,7 +629,7 @@ Operators:
 
       or
 
-      Returns the collection created by deleting an element.
+      Returns the collection created by deleting all instances of an element.
       Syntax x = delete(Collection, Element)
       Allowed types for x & Collection: list, dict, set, map.
       Allowed types for Element: any
@@ -607,8 +647,8 @@ Operators:
 47. determinant
       Returns the determinant of a Matrix, or element-wise across a collection of matrices.
       Syntax x = det(Matrix)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, struct.
-      Allowed types for Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ.
+      Allowed types for Matrix: matrix, block, circ, list, set, gate, struct.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 49. matrix add-column
@@ -633,9 +673,9 @@ Operators:
       addcolumn(y,x,1) =>      | 1 5 2 |
                                | 3 6 4 |
 
-      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Column-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.*
+      Allowed types for x & Matrix: matrix, block, circ, list, set, gate.
+      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, gate.
+      Allowed types for Column-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, gate.*
       *All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 50. matrix add-row
@@ -663,23 +703,23 @@ Operators:
                         | 5 6 |
                         | 3 4 |
 
-      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Row-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.*
+      Allowed types for x & Matrix: matrix, block, circ, list, set, gate.
+      Allowed types for Vector: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, gate.
+      Allowed types for Row-Index: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, gate.*
       *All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 52. matrix delete row
       Returns the matrix produced by removing a specified Row of a Matrix, or element-wise across collections of matrices and row indices.
       Syntax x = deleterow(Matrix, Row)
-      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Row: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.
+      Allowed types for x & Matrix: matrix, block, circ, list, set, gate.
+      Allowed types for Row: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 53. matrix delete column
       Returns the matrix produced by removing a specified Column of a Matrix, or element-wise across collections of matrices and column indices.
       Syntax x = deletecolumn(Matrix, Column)
-      Allowed types for x & Matrix: matrix, block, circ, list, set, map, dict, gate, struct.
-      Allowed types for Column: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, map, dict, gate, struct.
+      Allowed types for x & Matrix: matrix, block, circ, list, set, gate.
+      Allowed types for Column: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, gate.
       All non-numeric types will be treated as if they were (2's complement) using their register values.
 
 54. print
@@ -708,8 +748,8 @@ Operators:
 55. State of quantum (state)
       Returns in normalised vector format (a,b,c,d,e) the state of a quantum register, or element-wise across a collection of quantum registers.
       Syntax: x = state(Register)
-      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct. 
-      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre, list, set, map, dict, struct.
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, gate. 
+      Allowed types for Register: qubit, qnum, qnump, qstr, qstrs, qstrc, qstre, list, set, struct.
   
 56. type casting
       Attempts to cast a variable, or collection of variables, of one type to another, and return the Variable as the new Type.
@@ -723,8 +763,8 @@ Operators:
 57. exclusive make gate control 
       Converts a quantum gate of n qubits to be n+i qubits and treat the new i qubits as a control, or element-wise across collections of gates and control qubit counts.
       Syntax: x = ctrle(Gate, Control Qubits)
-      Allowed types for x & Gate: gate, matrix, block, circ, list, set, map, dict, struct.
-      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, map, dict, gate, struct.
+      Allowed types for x & Gate: gate, matrix, block, circ, list, set.
+      Allowed types for Control Qubit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, matrix, block, circ, list, set, gate.
       Examples:
       a =    [1 0 0 0 0 0 0 0]
              [0 1 0 0 0 0 0 0]
@@ -1530,21 +1570,143 @@ Operators:
       arccot(qnum("i", 0, 2)) = 0 - 0.54930614...i
 
 
-90. mean
-91. variance
-92. standard deviation
-93. derivative
-94. integral
-95. min gate set required for circuit
-96. do 2 circuits make same output
-97. is unitary?
-98. make circ into gate
-99. wait in seconds
-100. round
-101. floor
-102. ceiling
-103. gatenum in circ/block
+90. Mean (mean)
+      Returns the mean of a Collection of numeric types, or the collection of means of a collection of collections of numeric types.
+      Syntax:
+      x = mean(Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Collection: list, set, matrix, block, circ, gate.
+      
+91. Average (average)
+      Returns the average of a Collection of numeric types, or the collection of averages of a collection of collections of numeric types.
+      Syntax:
+      x = average(Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Collection: list, set, matrix, block, circ, gate.
 
+91. Variance (variance)
+      Returns the variance of a Collection of numeric types, or the collection of variances of a collection of collections of numeric types.
+      Syntax:
+      x = variance(Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Collection: list, set, matrix, block, circ, gate.
+
+92. Standard Deviation (stdev)
+      Returns the St. Dev. of a Collection of numeric types, or the collection of St. Dev.s of a collection of collections of numeric types.
+      Syntax:
+      x = stdev(Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Collection: list, set, matrix, block, circ, gate.
+
+93. Differentiation (derivative)
+      Returns the Nth derivative of a Function as string, given a string or numeric input. Also works on collections of strings and numeric inputs and return a collection of strings.
+      Syntax:
+      x = derivative(Function)  |defaults to first derivative
+      or
+      x = derivative(Function, N)
+      Allowed types for x, Function, & N: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+
+94. Integration (integral)
+      Returns the Nth integral of a Function as string, given a string or numeric input. Also works on collections of strings and numeric inputs and return a collection of strings.
+      This operand also allows definite integrals from Lower to Upper bound. Also, take a flag "c" which makes it not add the '+c' constant of intergation to indefinite integrals.
+      Syntax:
+      x = integral(Function)  | defaults to first unbounded integral
+      or
+      x = integral(Function, N) | Nth unbounded integral
+      or
+      x = integral("c",Function)  | defaults to first unbounded integral with no constant of integration
+      or
+      x = integral("c",Function, N) | Nth unbounded integral with no constant of integration
+      or
+      x = integral(Function, Lower, Upper) | 1st definite integral
+      or
+      x = integral(Function, N, Lower, Upper)
+      Allowed types for x, Function, N, Lower, & Upper: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for "c": String literal "c"
+      
+96. Circuits with Equal Theoretical Output (sameoutput)
+      Returns a boolean value or a collection of boolean values where 1 means that 2 circuits make the same theoritical output, and 0 meaning that they don't. Can work element-wise through two collections, or one collection of tuples.
+      Syntax: 
+      x = sameoutput(Circ1, Circ2)
+      or
+      x = sameoutput(Tuple_Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Circ1 & Circ2: matrix, block, circ, gate, list, set.
+      Allowed types for Tuple_Collection: map, dict, matrix, block, circ, gate, list, set.
+
+97. Check for Unitary-ness (isunitary)
+      Returns a boolean value or a collection of boolean values where 1 means a matrix is unitary, and 0 means that it is not. Can work element-wise with collections.
+      Syntax: x = isunitary(Matrix)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Matrix: matrix, block, circ, gate, list, set.
+
+99. Pause Execution (wait)
+      Pauses the execution of the program for some Time, in ms, or a collection of times in sequence. Returns 0 while waiting and 1 when completed.
+      Syntax x = wait(Time)
+      Allowed types for x & Time: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate. 
+      
+100. Rounding (round)
+      Returns a Number rounded to a Digit. Work element-wise through collections. Rounding is Half-to-Even or "Banker's Rounding" by default.
+      "z" flag will make it round half in the direction of zero. "p" flag will make it round half to positive infinity. "n" flag will make it round half to negative infinity. "a" flag will make it round half in the direction away from zero.
+      Digits: 0 = 1s place, 1 = 10ths place, -1 = 10s place and so forth
+      Syntax:
+      x = round(Number) | assumed 1s place
+      or
+      x = round(Number, Digit)
+      or
+      x = round(Tuple_Collection)
+      or
+      x = round(Flag, Number) | assumed 1s place
+      or
+      x = round(Flag, Number, Digit)
+      or
+      x = round(Flag, Tuple_Collection)
+      Allowed types for x, Number, Digit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Tuple_Collection: map, dict, matrix, block, circ, gate, list, set.
+      Allowed types for Flag: string literals "z", "p", "n", "a"
+
+101. Flooring (floor)
+      Returns a Number rounded down to a Digit. Work element-wise through collections.
+      Digits: 0 = 1s place, 1 = 10ths place, -1 = 10s place and so forth
+      Syntax:
+      x = floor(Number) | assumed 1s place
+      or
+      x = floor(Number, Digit)
+      or
+      x = floor(Tuple_Collection)
+      Allowed types for x, Number, Digit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Tuple_Collection: map, dict, matrix, block, circ, gate, list, set.
+
+102. Ceiling (ceiling)
+      Returns a Number rounded up to a Digit. Work element-wise through collections.
+      Digits: 0 = 1s place, 1 = 10ths place, -1 = 10s place and so forth
+      Syntax:
+      x = ceiling(Number) | assumed 1s place
+      or
+      x = ceiling(Number, Digit)
+      or
+      x = ceiling(Tuple_Collection)
+      Allowed types for x, Number, Digit: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Tuple_Collection: map, dict, matrix, block, circ, gate, list, set.
+
+103. Size of Circuit (numberofgates)
+      Returns the number of gates in a circuit or block, or a collection of the number of gates in a collection of circuits or blocks.
+      Syntax: x = numberofgates(Circ)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Circ: matrix, block, circ, gate, list, set.
+
+104. Collection Sum
+      Returns the sum of a collection of numeric types or a colleciton of sums of a collection of collections of numeric types
+      Syntax: x = sum(Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Collection: matrix, block, circ, gate, list, set.
+
+105. Collection Product
+      Returns the product of a collection of numeric types or a colleciton of products of a collection of collections of numeric types
+      Syntax: x = product(Collection)
+      Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
+      Allowed types for Collection: matrix, block, circ, gate, list, set.
+      
 
 
 Control Flow:
@@ -1568,11 +1730,13 @@ BACKEND INFORMATION:
 CONSIDER MOVING TO C FOR LATENCY
 
 To do list:
-remove map and dict and etc. from where they dont belong
 add function type
 add remiaining operands
 add bit limits
-review all
+add flow control
+add errors
+add libraries
+review all (types with map,dict,gate,struct etc.) (expand technical description in a duplicate doc.)
 consider moving to C
 answer all remaining spec. questions
 implment
