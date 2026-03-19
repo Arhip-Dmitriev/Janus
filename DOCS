@@ -2095,13 +2095,16 @@ Compilation Backend:
 ???
 
 Language of Development:
-???
+C++
+
+Parse Architecture:
+Hand Written Recursive Descent
 
 Thread Model:
 ???
 
 Backend Simulators:
-???
+QuEST
 
 Noise Models:
 Depolarization
@@ -2118,6 +2121,13 @@ All purely numeric types (include 'num' in short for of name), are 64 bits long.
 Concatatenation trumps element wise addition
 For operands like diff, which can return both a scalar and a collection, the return depends on the type it is assigned to, defaulting to the simpler type.
 There is both compile and run-time type checkign
+EVERYTHING IS VALUE, nothing is reference
+Matrix elements are accessed via matrix[row,col] matrix[1val] returns an error.
+f at least one operand is a list/set/map/dict, + is concatenation. Element-wise arithmetic on collections requires explicit syntax (which does not exist in Beta, so it simply is not available).
+Errors throw as they do in C.
+Transpiler produces a .py with imports already in it for Qiskit
+Print quantum prints a state vector.
+File extension is '.jan'
 
 General Design Philosophy:
 This language is meant to offer high level abstraction, allowing a user with little to no-understanding of quantum mechanics, to exploit them.
