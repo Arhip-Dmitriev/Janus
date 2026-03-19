@@ -1706,6 +1706,336 @@ Operators:
       Syntax: x = product(Collection)
       Allowed types for x: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, ctrs, ctrc, cstre, list, set, matrix, block, circ, gate.
       Allowed types for Collection: matrix, block, circ, gate, list, set.
+
+106. Absolute Value
+
+107. Square Root
+
+108. Imaginary Extraction
+
+109. Complex Number Extraction
+
+110. Normalise Vector ot matrix, if nomralised returns 0. Also is normalise to... (which is basically value clamping)
+
+111. Matrix Inverse
+
+112. Collection Maximum
+
+113. Collection Minimum
+
+114. Partial Trace
+
+115. Entropy
+
+116. Sort Ascending
+
+117. Sort Descending
+
+118. Random Value 0-1
+
+119. Fidelity
+
+120. Phase of Complex Number
+
+121. State to Density
+
+122. Density to State
+
+123. Matrix Commutator
+
+124. Matrix Anticommutator
+
+125. Hermetian Matrix Check
+
+126. Matrix Rank
+
+127. Moore-Penros Pseudo Inverse
+
+128. Factorial
+
+129. Additive Factorial 
+
+130. Binomial Coefficent
+
+131. Numeric Range Generation
+
+133. Flatten to Dimension
+
+134. Expand to Dimension (must be square cube or etc.)
+
+135. Collection Filter
+
+136. Collection Reduce
+
+137. Reduction Expand
+
+138. Norm of Vector/Matrix
+
+139. Singular Value Decomposition
+
+140. Density Matrix Purity
+
+141. Entaglement Concurrence
+
+142. Bloch Sphere Coordinates of State or Density
+
+143. Complex Conjugate
+
+144. Find Index of Element in Collection (find) (or just contains for unordered)
+
+145. Collection Remove Duplicates
+
+146. Collection Slice (matrices too)
+
+147. Greatest Common Divisor
+
+148. Least Common Multiple
+
+149. Modular Exponentation
+
+150. Decompose Gate
+
+151. Optimise Quantum Circuit
+
+152. Read from standard Input
+
+153. Nth root
+
+154. Primality Check
+
+155. Factor
+
+156. Inverse Modulus
+
+157. Hypotnuse
+
+158. Linear Interpolation
+
+159. Running / Cummulative Sum of Collection
+
+160. Running / Cummulative Product of Collection
+
+161. Discrete difference / change in colleciton
+
+162. is Integer?
+
+163. Hamming Weight
+
+164. Size of in Bits
+
+165. Hamming Distance
+
+166. Diagonal Extraction
+
+167. Diagonal Construction
+
+168. QR decomp
+
+169. LU decomp
+
+170. Cholesky Decomp
+
+171. Matrix null space
+
+172. Matrix col space
+
+173. Gram Schmidt Orthagonalization
+
+174. Condition number of collection or matrix
+
+175. Matrix symmetricity check
+
+176. Matrix Skew Symmetricity Check
+
+177. Positive Semi Definite Check
+
+178. POsitive Definite Check
+
+179. Spectral Radius
+
+180. Hadermard Prodcut
+
+181. Kronecker Product
+
+182. Full Amplitude Vector of Quatum Register
+
+183. Defined Outcome Probability
+
+184. State Probability Distribution
+
+185. Trace Distance
+
+186. Bures Distance
+
+187. Quantum Reletive Entropy
+
+188. Quantum Mutual Information
+
+189. Entaglement Negativity
+
+190. Partial Transpose
+
+191. Schmidt Decomp.
+
+192. Schmidt Rank
+
+193. Seperability Check
+
+194. Pauli Basis Decomposition
+
+195. Opposite of 194 Pauli Basis Constructor
+
+196. Quantum Fourier Transfrom Circuit make
+
+197. Quantum Fourier Transfrom Circuit to N
+
+198. Post Selection
+
+199. Apply Quantum Channell
+
+200. Extract Kraus Operator
+
+201. Extract Choi Matrix.
+
+202. CPTP check
+
+203. Process Fidelity
+
+204. Diamond Norm
+
+205. Time evolve (takes H and init state)
+
+207. Produce time evolution equation (takes H and init state)
+
+212. Pauli Twirl
+
+213. Make GHZ State Preparation Circuit
+
+214. Make Bell State Preparation Circuit
+
+215. Make W State Preparation Circuit
+
+216. Sequential Circuit Composition (circ1 then circ2)
+
+217. Circuit / Gate Inversion
+
+218. Circuit Repeated N times as 1 Circuit
+
+221. Circuit Rewrite using provided gate set (defaults to min set by number of unique gates)
+
+224. String / Collection Length
+
+225. String to Uppercase
+
+226. String to Lowercase
+
+227. Whitespace Trimming
+
+228. String Splitting (by delimmter or by "split every n")
+
+229. Collection to String Joining
+
+230. String Replacement
+
+231. Prefix Check
+
+232. Suffix Check
+
+233. Substring Membership Check
+
+234. String Padding
+
+235. To Binary, to Hex, to Octal, to Decimal String for all types
+
+239. Number Formatting
+
+243. Collection Reversal
+
+247. Tuple Collection Splitting
+
+248. Index-Element Pairing
+
+249. Set Intersection
+
+250. Set Union
+
+251. Set Difference
+
+253. Element Frequency Count
+
+254. Index of Maximum
+
+255. Index of Minimum
+
+256. Universal Predicate Check
+
+257. Existential Predicate Check
+
+258. Universal Negation Check
+
+259. Collection Grouping (smart split)
+
+261. Running Accumulation
+
+262. Collection Rotation
+
+263. Type Name Query
+
+264. Bit Size Query
+
+265. Empty Collection Check
+
+266. Quantum Type Check
+
+267. Classical Type Check
+
+268. Collection Median
+
+269. Collection Mode
+
+270. Collection Percentile
+
+271. Covariance
+
+272. Pearson Correlation Coefficient
+
+273. KL Divergence
+
+274. Jensen-Shannon Divergence
+
+275. Distribution Sampling
+
+276. Probability Distribution Normalisation
+
+277. Assertion
+
+278. Explicit Error Throw
+
+279. Execution Timing
+
+280. Current Time Query
+
+281. Value Hashing
+
+283. Memoisation
+
+284. File Append
+
+285. Line-by-Line File Reading
+
+286. File Existence Check
+
+287. Directory Listing
+
+288. Circuit Diagram Draw
+
+289. Tabular Formatting
+
+290. Histogram Constructor
+
+
+
+
       
 
 
@@ -1719,29 +2049,9 @@ Control Flow:
 Error Catching
 1. try, catch, throw, run "x code" if caught
 
-Function Definitions
-
 Library Definition and Use
 
-ADD BIT LIMITS TO ALL TYPE DEFS!!
-Need a function type
-
 BACKEND INFORMATION:
-CONSIDER MOVING TO C FOR LATENCY
-
-To do list:
-add function type
-add remiaining operands
-add bit limits
-add flow control
-add errors
-add libraries
-review all (types with map,dict,gate,struct etc.) (expand technical description in a duplicate doc.)
-consider moving to C
-answer all remaining spec. questions
-implment
-
-
 
 Transpilation Targets:
 Qiskit, OpenQASM, PennyLane
@@ -1750,15 +2060,22 @@ Compilation Backend:
 ???
 
 Language of Development:
-Rust
+???
 
 Thread Model:
 ???
 
 Backend Simulators:
-QuEST
+???
 
 Noise Models:
 Depolarization
 
-Precision on built in constant is maximum to applicable numeric type
+Precision on built in constant is maximum to applicable numeric type.
+
+General Design Philosophy:
+This language is meant to offer high level abstraction, allowing a user with little to no-understanding of quantum mechanics, to exploit them.
+Simultaneously, this language allows for low level interactions with quantum systems.
+Furthermore, while too simplistic for classical programming uses, and containing minimal types, there is an aim to offer a comprehensive package of mathematical operands for easy calculations.
+On the technical side, no lower level operation is ever able to be done in two equivalent ways, with the except of quantum circuit design.
+The language is designed to be readable for those with applicable sceintific and mathematical knowledge, with little to no programming experience.
