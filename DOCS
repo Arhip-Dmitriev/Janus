@@ -1,3 +1,5 @@
+OPERANDS MISSING DESCRIPTIONS ARE NOT INCLUDED IN THE BETA
+
 Basic Syntax:
 
 Commands are split by new-line, except where there is a missing closed parenthese.
@@ -2032,6 +2034,10 @@ Operators:
 289. Tabular Formatting
 
 290. Histogram Constructor
+
+UNREVIEWED PROPOSED OPERANDS:
+
+291. 
 
 
 
