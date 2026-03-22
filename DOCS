@@ -16,6 +16,105 @@ Whitespace is not considered anywhere except for when found within string litera
 
 OPERATOR PRECEDENCE TABLE
 
+	1.  Parentheses & Grouping                      ( )   { }   [ ]
+	2.  Literals                                    5   5.5   "hello"   true   false   null
+	3.  Function calls & operands                   sin()   cos()   measure()   run()   print()   ...
+	4.  Postfix access & indexing                   collection[i]   matrix[r,c]   map(key)   struct.field
+	5.  Unary prefix                                not   !   -   <<   >>   trace   det   state   peek   transpose   transposec   evals   evecs   gates   qubits   depth   isunitary   string   ln   ...
+	6.  Type casting                                (type) Variable
+	7.  Tensor & vector products                    tensor   dot   outer   cross
+	8.  Exponentiation                              ^                                               (right-associative)
+	9.  Multiplication, Division, Modulus           *   /   //   %
+	10. Addition & Subtraction                      +   -
+	11. Relational                                  <   >   <=   >=
+	12. Equality & identity                         ==   is   is!   issame   istypeof   istypeof!
+	13. Bitwise logic                               and   nand   or   nor   xor   xnor
+	14. Boolean negation                            !Expression
+	15. Difference operators                        diff   diffs
+	16. Reference swap                              <->
+	17. Assignment                                  =
+
+	Associativity:
+		Right-associative:          ^   =
+		Left-associative:           all others
+
+	Ambiguous situation resolutions:
+
+		Unary minus vs subtraction:
+			A unary minus is recognised when - appears at the start of an expression, or immediately after an operator, opening bracket, or assignment. Otherwise it is binary subtraction.
+			Example: -5 ^ 2 => -(5 ^ 2) => -25   (unary minus binds after exponentiation)
+
+		Unary prefix shift vs standalone token:
+			<< and >> are always unary prefix operators. They are never binary. There is no ambiguity.
+
+		! as boolean negation vs part of operator token:
+			When ! appears immediately attached to is or istypeof with no whitespace (is!, istypeof!), it is parsed as part of that operator token at level 12.
+			When ! appears before any other expression it is a unary boolean negation at level 5.
+			When ! appears after a full expression it is a boolean negation at level 14, applying to the result of that expression.
+
+		+ as addition vs concatenation:
+			Resolved at compile time by type. If at least one operand is a list, set, map, or dict, + is concatenation. Otherwise it is arithmetic addition. Both share precedence level 10.
+
+		- as subtraction vs map literal key-value separator:
+			The - inside a map literal [ key-value, key-value ] is parsed as a structural separator token, not as the subtraction operator. This is resolved structurally during parsing of the literal, never as an arithmetic expression.
+
+		* as multiplication vs matrix literal:
+			Matrix literals [ i,j ; k,l ] are parsed structurally. The , and ; inside are structural tokens, not operators. There is no ambiguity with multiplication.
+
+		Chained relational operators:
+			Relational operators do not chain. a < b < c is parsed as (a < b) < c, where (a < b) returns a cbit, which is then compared to c numerically.
+
+		Chained assignment:
+			= is right-associative. a = b = 5 is parsed as a = (b = 5), setting both b and a to 5.
+
+		Chained exponentiation:
+			^ is right-associative. 2 ^ 3 ^ 2 is parsed as 2 ^ (3 ^ 2) => 2 ^ 9 => 512.
+
+		Chained reference swap:
+			<-> is left-associative but chaining is only valid when used with collection literals on both sides as described in the reference swap operand definition. Otherwise each <-> is a discrete swap statement.
+
+		Mixing tensor/vector products with arithmetic:
+			tensor, dot, outer, cross bind more tightly than * / // %. Therefore:
+			a * b tensor c => a * (b tensor c)
+			a tensor b * c => a tensor (b * c)
+
+		Mixing type casting with other operators:
+			Type casting at level 6 binds more tightly than all binary operators. Therefore:
+			(cnum) a + b => ((cnum) a) + b
+			(cnum) a ^ b => ((cnum) a) ^ b
+
+		Unary operands with multiple arguments (eg. expect, ctrle, ctrli, solvep, solvea):
+			These are always parsed as function-call style operands at level 3, never as prefix operators. Their arguments are fully evaluated left to right before the operand is applied.
+
+		where, from, to inside foreach:
+			These are structural keywords parsed as part of the foreach header. They are never expression operators and carry no precedence. The expressions appearing after them (Condition, Lower, Upper) are evaluated independently as full expressions using this precedence table.
+
+		-> inside priority() and name():
+			The -> token is a structural keyword of those operand syntaxes, not an expression operator, and carries no precedence.
+
+		null in circuit and block matrices:
+			null is a literal at level 2, treated as the identity at circuit evaluation time. It is not an operator.
+
+		Operand return values used in expressions:
+			Any operand that returns a value (eg. run(), measure(), depth()) is parsed at level 3 and its return value participates in the surrounding expression normally.
+			Example: depth(mycirc) + 1 => (depth(mycirc)) + 1
+
+		Boolean short-circuit evaluation:
+			and, or, nand, nor, xor, xnor are bitwise operators and always evaluate both operands fully. There is no short-circuit evaluation.
+
+		Parallel and thread expressions:
+			parallel{ } and thread() are parsed as operand-level constructs at level 3. Their return values participate in surrounding expressions normally.
+
+		String interpolation ${ }:
+			Expressions inside ${ } are evaluated as complete independent expressions using this full precedence table before being converted to string and interpolated. They do not inherit any precedence context from the surrounding string.
+
+		Quantum measurement by assignment (x = quantum_register where x is classical):
+			This is syntactic sugar resolved at parse time into an implicit measure() call. It does not interact with operator precedence.
+
+		foreach return value in expressions:
+			The return value of a foreach loop (iterations completed + 1, or 0) is available immediately after the closing brace if the loop was assigned. It participates in surrounding expressions normally.
+			Example: x = foreach(n in mylist) { ... } + 1 is not valid. The assignment = is the lowest precedence operator and the foreach block must be the entire right-hand side. To use the return value in a further expression, assign it first then operate on it.
+
 x = x + x  is valid and will result in x being doubled if it is a register type (primitive).
 x = x + x + x + x is also valid and will result in x being quadrupled if it is a regsiter type (primitive).
 
@@ -2076,10 +2175,170 @@ Control Flow:
 	Allowed types for a,b,c, & Expression: any (bitwise 0 will evaluate to false, anything else to true)
 
 
-2. For Loop (break)
-3. While Loop (break)
-4. Repeat n-times loop
-5. For-each n in y loop
+2. For Loop
+	Executes a block of code while a condition is true, with an initialisation statement and an update expression. Supports break to exit early and continue to skip to the next iteration. Returns the number of iterations completed + 1, or 0 if none. Return is updated per iteration.
+	Syntax:
+	x = for(Init; Condition; Update) {
+	...
+	}
+	or
+	for(Init; Condition; Update) {
+	...
+	}
+	Example:
+	for(i = 0; i < 10; i = i + 1) {
+		print("${i}")
+	}
+	Allowed types for x: any (will be set to bitwise 0 if the loop did not run, and else will be set to the number of times the loop has run + 1)
+	Allowed types for Init & Update: any valid assignment statement.
+	Allowed types for Condition: any (bitwise 0 will evaluate to false, anything else to true).
+
+3. While Loop
+	Executes a block of code repeatedly for as long as a condition remains true. Supports break to exit early and continue to skip to the next iteration. Returns the number of iterations completed + 1, or 0 if none. Return is updated per iteration.
+	Syntax:
+	x = while(Condition) {
+	...
+	}
+	or
+	while(Condition) {
+	...
+	}
+	Example:
+	i = 0
+	while(i < 10) {
+		print("${i}")
+		i = i + 1
+	}
+	Allowed types for x: any
+	Allowed types for Condition: any (bitwise 0 will evaluate to false, anything else to true).
+
+4. Repeat Loop
+	Executes a block of code exactly N times. N is evaluated once. Supports break to exit early and continue to skip to the next iteration. Returns the number of iterations completed + 1, or 0 if none. Return is updated per iteration.
+	Syntax:
+	x = repeat(N) {
+	...
+	}
+	or
+	repeat(N) {
+	...
+	}
+	Example:
+	repeat(10) {
+		print("hello")
+	}
+	Allowed types for x: any
+	Allowed types for N: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, cstrs, ctrc, cstre.
+	All non-numeric types will be treated as if they were (2's complement) using their register values.
+
+5. For-Each Loop
+	Iterates over each Element in a Collection, assigning each element to a named variable for the duration of that iteration. Supports break to exit early and continue to skip to the next iteration. Returns the number of iterations completed + 1, or 0 if none. Return is updated per iteration.
+	The optional 'where' clause filters iteration to only elements satisfying a Condition. The optional 'from' and 'to' clauses restrict iteration to a lower (inclusive) and upper (exclusive) index bound respectively. Matrices, gates, circs, and blocks are iterated in row-major order.
+	Syntax:
+	x = foreach(Element in Collection) {
+	...
+	}
+	or
+	foreach(Element in Collection) {
+	...
+	}
+	or
+	x = foreach(Element in Collection where Condition) {
+	...
+	}
+	or
+	foreach(Element in Collection where Condition) {
+	...
+	}
+	or
+	x = foreach(Element in Collection from Lower to Upper) {
+	...
+	}
+	or
+	foreach(Element in Collection from Lower to Upper) {
+	...
+	}
+	or
+	x = foreach(Element in Collection from Lower) {
+	...
+	}
+	or
+	foreach(Element in Collection from Lower) {
+	...
+	}
+	or
+	x = foreach(Element in Collection to Upper) {
+	...
+	}
+	or
+	foreach(Element in Collection to Upper) {
+	...
+	}
+	or
+	x = foreach(Element in Collection where Condition from Lower to Upper) {
+	...
+	}
+	or
+	foreach(Element in Collection where Condition from Lower to Upper) {
+	...
+	}
+	or
+	x = foreach(Element in Collection where Condition from Lower) {
+	...
+	}
+	or
+	foreach(Element in Collection where Condition from Lower) {
+	...
+	}
+	or
+	x = foreach(Element in Collection where Condition to Upper) {
+	...
+	}
+	or
+	foreach(Element in Collection where Condition to Upper) {
+	...
+	}
+	Examples:
+	# Basic iteration over a list
+	mylist = list([1,2,3,4,5])
+	foreach(n in mylist) {
+	print("${n}")
+	}
+	# where with from and to
+	mylist = list([1,2,3,4,5])
+	foreach(n in mylist where n != 3 from 1 to 4) {
+		print("${n}")
+	}
+	# prints 2, 4
+	
+	# Early exit with break
+	mylist = list([1,2,3,4,5])
+	foreach(n in mylist) {
+		if(n == 3) { break }
+		print("${n}")
+	}
+	# prints 1, 2
+	
+	# Skipping iterations with continue
+	mylist = list([1,2,3,4,5])
+	foreach(n in mylist) {
+		if(n == 3) { continue }
+		print("${n}")
+	}
+	# prints 1, 2, 4, 5
+	
+	# Iterating over a matrix in row-major order
+	mymx = [1,2;3,4]
+	foreach(n in mymx) {
+		print("${n}")
+	}
+	# prints 1, 2, 3, 4
+	
+	Allowed types for x: any.
+	Allowed types for Element: any.
+	Allowed types for Collection: list, set, map, dict, matrix, gate, circ, block (matrices and any matrix-adjacent types evaluated in row-major order).
+	Allowed types for Condition: any (bitwise 0 will evaluate to false, anything else to true).
+	Allowed types for Lower & Upper: qubit, cbit, qnum, qnump, cnum, qstr, qstrs, qstrc, qstre, cstr, cstrs, ctrc, cstre.
+	All non-numeric types for Lower & Upper will be treated as if they were (2's complement) using their register values.
 
 Error Catching
 1. try, catch, throw, run "x code" if caught
@@ -2128,6 +2387,192 @@ Errors throw as they do in C.
 Transpiler produces a .py with imports already in it for Qiskit
 Print quantum prints a state vector.
 File extension is '.jan'
+
+Variable Scope information:
+Variable Scope:
+
+General:
+	Janus uses a single flat script-level scope as its outermost scope. Execution begins at line 1 and all variables declared at the top level are global to the file. There is no entry point function requirement. All scope rules are consistent across all block types (if, else if, else, for, while, repeat, foreach). Concurrency scope (thread, parallel) is not defined in the beta.
+
+Block Scope:
+	Variables declared inside a block are scoped to that block and do not exist outside it after the block closes.
+	Example:
+		if(true) {
+			x = 5
+		}
+		print("${x}")   # Error: x does not exist here
+
+	A variable declared inside a block that shares a name with an outer variable shadows the outer variable for the duration of that block. The outer variable is unchanged when the block closes.
+	Example:
+		x = 10
+		if(true) {
+			x = 5       # this is a new x, shadowing the outer x
+			print("${x}")   # prints 5
+		}
+		print("${x}")   # prints 10
+
+	A shadowing inner variable may be of any type, independent of the outer variable it shadows.
+	Example:
+		x = 10          # x is a cnum
+		if(true) {
+			x = "hello" # this inner x is a cstr, entirely independent
+			print("${x}")   # prints hello
+		}
+		print("${x}")   # prints 10
+
+Loop & Conditional Variable Persistence:
+	The iteration variable of a foreach loop, the initialisation variable of a for loop, and any variables declared inside a where, from, or to expression in a foreach header all persist after the loop ends, as if they had been declared on the line immediately above the loop.
+	Example:
+		foreach(n in list([1,2,3,4,5])) {
+			print("${n}")
+		}
+		print("${n}")   # prints 5, n persists with its last assigned value
+
+	Example:
+		for(i = 0; i < 5; i = i + 1) {
+			print("${i}")
+		}
+		print("${i}")   # prints 5, i persists with its last assigned value
+
+	If the loop body never executes (eg. an empty collection or a condition that is immediately false), the iteration or initialisation variable still persists in the enclosing scope, holding whatever value it was assigned during the header evaluation, or null if it was never assigned.
+	Example:
+		foreach(n in list([])) {
+			print("${n}")
+		}
+		print("${n}")   # n exists, holds null
+
+Function Scope:
+	Functions are fully isolated. A function may only access its own parameters and variables declared within its own body. It cannot read or modify variables from any enclosing or global scope without those values being explicitly passed as parameters. Since all parameters are passed by value, a function can never mutate a variable in the calling scope. Return values are also passed by value.
+	Example:
+		x = 10
+		f = function() {
+			print("${x}")   # Error: x is not accessible here
+		}
+
+		g = function(val) {
+			print("${val}")   # prints 10
+		}
+		g(x)
+
+	Functions may be declared anywhere in a file and called from anywhere in that same file, including before their declaration in source order. Recursion is permitted.
+	Example:
+		result = factorial(5)
+
+		factorial = function(n) {
+			if(n <= 1) { return 1 }
+			return n * factorial(n - 1)
+		}
+
+	Nested function declarations are permitted. An inner function obeys the same isolation rules and cannot access the outer function's variables without explicit passing.
+	Example:
+		outer = function(a) {
+			inner = function(b) {
+				return b * 2   # cannot access a without it being passed
+			}
+			return inner(a)
+		}
+
+Global Variables:
+	Variables declared at script level are global to the file. They are not automatically accessible inside functions (see Function Scope above) but are accessible everywhere else in the file, including inside if, for, while, repeat, and foreach blocks, subject to the shadowing rules described above.
+
+Re-declaration and Typing:
+	There is no explicit declaration syntax in Janus. A variable comes into existence on its first assignment and its type is determined by that assignment. Re-assigning a variable to a value of a different type in the same scope is not permitted and is an error. To store a value of a different type, a new variable name must be used, or a type cast must be applied to make the assigned value match the existing type.
+	Example:
+		x = 5           # x is a cnum
+		x = 10          # valid, still a cnum
+		x = "hello"     # Error: cannot assign cstr to cnum variable x
+		x = (cnum) "hello"  # valid if the cast succeeds, x remains a cnum
+
+Quantum Register Lifetime:
+	When a qubit or quantum register goes out of scope (eg. declared inside a block that has closed), its state is silently discarded with no measurement and no reset. It is the programmer's responsibility to measure or copy any quantum state that needs to be preserved before the enclosing block closes.
+	Example:
+		if(true) {
+			q = qubit()
+			q = H tensor q   # q is now in superposition
+		}                    # q's state is silently discarded here
+
+		if(true) {
+			q = qubit()
+			result = measure(q)   # explicitly preserve the result before close
+		}
+		print("${result}")   # valid, result is a classical type in the outer scope
+
+Beta Version information:
+Operands (?->?)
+Native Compilation
+Qiskit Transpilation
+1 error to throw in any problem situation
+No libraries
+No throw catch try error syntax
+
+Janus is a quantum-classical programming language implemented in C++20 using QuEST as the quantum simulation backend. The compiler is a single binary invoked as janus file.jan for direct execution or janus -qiskit file.jan to emit a standalone .py file with Qiskit imports, with an optional -o flag for output file naming. The source file extension is .jan. Programs are script-style: execution begins at line 1, functions may be declared anywhere in a file and called from anywhere in that file, and recursion is permitted. A top-level return with an integer value sets the process exit code (mod 256); a top-level return with a non-integer is an error; absence of a top-level return exits with code 0. The compiler architecture is: Lexer producing a token stream, hand-written recursive descent Parser producing an AST, Type Checker producing an annotated AST, IR Generator producing a high-level Janus IR (preserving control flow structures such as IF, FOR, and WHILE rather than lowering to basic blocks), with the IR consumed by either the QuEST execution backend or the Qiskit transpilation backend. A shared Circuit Synthesizer module is called during IR generation to expand implicit quantum operations (such as arithmetic on qnum types) into concrete gate sequences; both backends consume these gate sequences identically, ensuring the circuit synthesis logic exists in exactly one place. The Qiskit transpiler emits a complete Python program that mirrors the control flow of the Janus source. All types are: qubit, cbit, qnum (dynamically allocated to the minimum bits needed to represent the initialized value, with an optional user-specified maximum, complex parts always equal in width), cnum, cstr, list, matrix, gate, circ, block, and function. Assignment is always by value, including for quantum types, meaning y = x where x is a qubit or qnum produces a copy of the state vector. When z = x + y on qnums assigns to a classical type, x and y are implicitly measured, collapse to |0> or |1>, and remain in those collapsed states; when z is a quantum type, x and y remain in their original states and z holds the quantum result. The specific quantum arithmetic circuit strategy (adder selection, ancilla management, register lifetime details) is marked as [PLACEHOLDER: to be specified during operator review]. Qnum uses dynamic qubit allocation: qnum(5) allocates 3 qubits, qnum(255) allocates 8, and a user-specified maximum can cap the register width. All purely numeric types (those containing "num" in their short name) use 64 bits when classical, with complex numbers splitting 32+32 between real and imaginary parts. Null is bitwise 0 everywhere, meaning null == 0 and null == false are both true. If at least one operand of + is a list, set, map, or dict, the operation is concatenation; element-wise arithmetic on collections is not available. Matrix elements are accessed via matrix[row, col]; single-index matrix access returns an error. Collection elements are accessed via collection[index], and map elements via map(key). Unordered collections support index access but index permanence is never guaranteed. Printing a quantum type outputs the state vector without collapsing it. There is a single error code (error code 1, unknown error) for all error conditions; when any error occurs, the program prints Error (line N): unknown error to stderr and halts immediately. There is no try/catch/throw syntax and no library/import system. The compiler ships with predefined gate constants: I, X, Y, Z, H, S, T, CNOT, SWAP, Toffoli, and parameterized rotation gates Rx(theta), Ry(theta), Rz(theta). The following items require specification before implementation can begin and are marked as placeholders in the syntax documentation: operator precedence table [PLACEHOLDER], variable scoping rules [PLACEHOLDER], for loop syntax [PLACEHOLDER], while loop syntax [PLACEHOLDER], string representation of quantum states (the asterisked footnote) [PLACEHOLDER], and the implicit quantum arithmetic circuit strategy [PLACEHOLDER]. Both compile-time and runtime type checking are performed. The operator set, all type definitions, control flow syntax for if/else/else if, and all other language semantics are defined in the accompanying Janus syntax documentation.
+
+Quantum States when printed as strings are printed in standard dirac notation with ket - |?> and bra <?|
+
+Since quantum types are stored as states, assigning one to another simply copies the state.
+
+Memory Allocation Rules:
+
+Classical Numeric Types (cnum):
+	A cnum is always exactly 64 bits. This is fixed and never dynamic.
+	A purely real cnum uses all 64 bits for its real part. No imaginary storage is allocated.
+	A complex cnum splits as 32 bits real and 32 bits imaginary. This split is fixed whenever a complex value is present.
+	When an arithmetic result exceeds the 64-bit representable range, the result wraps around silently and a warning is emitted. The program does not halt.
+	When a floating point result cannot be represented exactly within 64 bits, the result is rounded to the nearest representable value using half-to-even (banker's) rounding, and a warning is emitted. The program does not halt.
+	Integer division (//) and modulus (%) on floating point cnums are permitted. The operands are treated as their integer truncations for the purpose of the operation.
+	These overflow, underflow, and precision rules apply consistently to all operations that return a cnum, including the return values of all mathematical operands such as round(), floor(), log(), sin(), and so forth.
+
+Quantum Numeric Types (qnum and qnump):
+	A qnum is dynamically allocated to the minimum number of qubits needed to represent its initialised value exactly, up to a maximum of 64 qubits for a real value or 32+32 qubits for a complex value.
+	For floating point initialisations, the allocator grows the register to represent the value exactly, stopping at the bit maximum. If the exact representation requires more bits than the maximum allows, the value is truncated at the maximum width and a warning is emitted.
+	A user may permanently cap a qnum's width at declaration using the syntax qnum(value, max), for example qnum(43, 8) allocates exactly 8 qubits and permanently limits that register to 8 qubits for its entire lifetime.
+	When a qnum is initialised to 0, it is allocated 1 qubit, since 0 is representable in 1 bit.
+	When two qnums interact in an arithmetic operation, the result register width is the minimum width needed to accommodate the result, bounded by the maximum bit length of the variable being assigned to. For example, if x was declared as qnum(43, 8) and x = a + b is evaluated, the result is computed and then stored into x's existing 8-qubit register, wrapping around if the result exceeds 8 qubits, with a warning emitted.
+	For complex qnums, the real and imaginary parts are always equal in qubit width, even when one part is zero. For example qnum("i", 0, 5) allocates the same number of qubits for the real part as for the imaginary part.
+	qnump follows exactly the same allocation, maximum, overflow, and precision rules as qnum. The difference is only in the encoding strategy (phase via QFT), not in the allocation rules.
+
+Classical String Types (cstr and variants):
+	A cstr is fixed in size at declaration time, determined by the length of the initialising string. Each ASCII character occupies 7 bits. Reassigning a cstr to a longer string is an error. Reassigning to a shorter string is permitted and the unused high bits are set to zero.
+	cstrs and cstrc follow the same fixed-size rule at 5 bits per character.
+	cstre allocates per character at declaration time according to the actual UTF-8 encoding of each character, meaning characters may occupy 8, 16, 24, or 32 bits each. The total register size is fixed at declaration. Reassigning to a string whose encoded byte length exceeds the original is an error.
+	When two strings of different lengths are compared with ==, the comparison is performed over their register values. A shorter register is not padded, meaning two strings of different lengths will always return false for ==, since their register sizes differ.
+
+Quantum String Types (qstr and variants):
+	Quantum strings are fixed in size at declaration time, following the same rules as their classical counterparts. qstr allocates 7 qubits per character, qstrs and qstrc allocate 5 qubits per character, and qstre allocates per character according to UTF-8 encoding width.
+	Reassigning a quantum string to a string of different length is an error.
+
+Collection Types (list, matrix, set, map, dict):
+	Lists are dynamic. They grow as needed and there is no declared maximum size. The only limit is available memory.
+	When a list is declared with a length and no type constraint, for example list(3), it initialises to [null, null, null] where each null slot has no allocated width until a value is assigned to it. The slot takes on the width of the first value assigned to it.
+	Matrices are not resizable after declaration. Their dimensions are fixed at declaration time. addrow() and addcolumn() return new matrices rather than modifying the original.
+	Mixed-width elements within a matrix or collection are stored at their own individual widths. There is no promotion or normalisation to a common width across elements.
+
+Gate, Block, and Circ:
+	The qubit width of a gate is always inferred from the dimensions of its defining matrix. A 2x2 matrix defines a 1-qubit gate, a 4x4 matrix defines a 2-qubit gate, and so forth. The user cannot specify a width independently of the matrix.
+	A circ is a structured sequence of gate applications and does not itself store qubits or allocate quantum registers. The qubits a circ operates on are those passed into it at construction time or at run() time. The circ is effectively a glorified matrix of tensor products of gates and its memory footprint is determined entirely by the gates it contains, not by any qubit register allocation.
+
+Qubit:
+	A qubit is always exactly 1 qubit. No allocation decision is required beyond its existence. When a qubit goes out of scope it is silently discarded with no measurement and no reset, as described in the scope rules. No formal deallocation beyond this is required on the QuEST simulator side.
+
+Compiler Flags:
+The Janus compiler is invoked from the command line as a single binary. Flag order is fully flexible and may appear in any position relative to the source file argument, following the same conventions as C compilers.
+Flags:
+FlagDescriptionjanus file.janCompile and execute the source file using the QuEST simulation backend-qiskitTranspile to a standalone Qiskit .py file instead of executing-o <name>Override the output file name. Without this flag the output takes the name of the source file with the appropriate extension (eg. file.jan produces file.py under -qiskit)-p32Run QuEST simulation in 32-bit floating point precision. Default is 64-bit-vPrint the compiler version and exit
+
+
+Notes:
+
+Direct execution produces no output file. -o is only meaningful alongside -qiskit.
+-p32 affects only the QuEST simulation backend and has no effect when used with -qiskit.
+All flags may appear before or after the source file argument in any order.
+
+Gate Library
+Predefined gates are accessed through the gates namespace using function-call syntax. Non-parameterised gates are called as gates.name() and always require parentheses. Parameterised gates are called as gates.name(param, ...) and return a fully constructed gate value. Every call returns an independent gate value consistent with pass-by-value semantics. A user may declare a variable named gates without conflict. A user may also define a function with the same name as a predefined gate operand provided the parameter signature differs.
+The compiler validates every gate at declaration time. Any matrix passed to gate(matrix) that is not square, not of dimensions 2^n x 2^n for integer n >= 1, or not unitary will produce error code 1 and halt.
+null placed in a circuit matrix is a structural placeholder meaning do nothing on this qubit at this time step. During circuit synthesis null is treated as the identity for the purpose of computing the full circuit unitary, and is therefore theoretically equivalent to gates.i(). However null is never counted as a gate by numberofgates(), depth(), gates(), or any other circuit inspection operand. gates.i() is counted as a gate by all of these operands.
+Predefined Gate Operands:
+OperandParametersQubitsCommon Namegates.i()none1Identitygates.x()none1Pauli-X (NOT)gates.y()none1Pauli-Ygates.z()none1Pauli-Zgates.h()none1Hadamardgates.s()none1S (phase)gates.sdg()none1S-dagger (S†)gates.t()none1Tgates.tdg()none1T-dagger (T†)gates.sx()none1Square-root-Xgates.sxdg()none1Square-root-X-daggergates.rx(theta)theta: rotation angle in radians1X-axis rotationgates.ry(theta)theta: rotation angle in radians1Y-axis rotationgates.rz(theta)theta: rotation angle in radians1Z-axis rotationgates.p(theta)theta: phase angle in radians1Phase shiftgates.u(theta, phi, lambda)theta, phi, lambda: Euler angles in radians1General single-qubit unitarygates.cnot()none2Controlled-NOT (CX)gates.cy()none2Controlled-Ygates.cz()none2Controlled-Zgates.ch()none2Controlled-Hadamardgates.swap()none2SWAPgates.iswap()none2iSWAPgates.crx(theta)theta: rotation angle in radians2Controlled X-rotationgates.cry(theta)theta: rotation angle in radians2Controlled Y-rotationgates.crz(theta)theta: rotation angle in radians2Controlled Z-rotationgates.cp(theta)theta: phase angle in radians2Controlled phase shiftgates.xx(theta)theta: interaction angle in radians2Ising XX interactiongates.yy(theta)theta: interaction angle in radians2Ising YY interactiongates.zz(theta)theta: interaction angle in radians2Ising ZZ interactiongates.toffoli()none3Toffoli (CCX)gates.cswap()none3Fredkin (CSWAP)
+Parameter types for all parameterised gates: theta, phi, and lambda accept any numeric type (qubit, cbit, qnum, qnump, cnum). All non-numeric types are treated as their 2's complement register value.
 
 General Design Philosophy:
 This language is meant to offer high level abstraction, allowing a user with little to no-understanding of quantum mechanics, to exploit them.
