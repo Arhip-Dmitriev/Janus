@@ -1,0 +1,22 @@
+Janus Execution Speed Benchmark
+Single-Qubit Hadamard Gate, 100 Iterations
+March 27, 2026
+
+Overview
+This benchmark measures the wall-clock execution time for 100 consecutive runs of a single-qubit Hadamard gate operation across three execution methods: native Janus, Janus-generated Python (Qiskit backend), and an optimised hand-written Python equivalent. All tests were run on Windows using PowerShell's Measure-Command over the same hardware environment.
+
+Test Case
+The program initialises a single qubit in the |0> state, applies a Hadamard gate, and prints the resulting state vector. In Janus, this is written as:
+q = qubit()
+c = circ(1, [gates.h()])
+result = run(c)
+print("${result}")
+
+Results
+Native Janus: 986.75 ms total across 100 runs, averaging approximately 9.87 ms per execution.
+Janus-generated Python (.py): 70,777.31 ms total across 100 runs, averaging approximately 707.77 ms per execution.
+Optimised hand-written Python (.py): 70,583.35 ms total across 100 runs, averaging approximately 705.83 ms per execution.
+
+Analysis
+Native Janus execution was approximately 71.7x faster than both Python variants. The Janus-generated Python and the optimised hand-written Python performed nearly identically, with a difference of less than 0.3%, confirming that the generated code is not the source of overhead. The bottleneck in both Python cases is Python process startup and Qiskit library initialisation cost, which is incurred on every run. This overhead is absent in native Janus, which runs as a compiled binary with no such import chain.
+The results demonstrate that for repeated or scripted invocations, native Janus execution carries a substantial performance advantage over Python-based quantum simulation, entirely independent of code quality or optimisation level.
