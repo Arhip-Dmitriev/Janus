@@ -145,12 +145,13 @@ int main(int argc, char* argv[]) {
 
         // -p32 has no effect on the Qiskit backend and is silently
         // ignored
-        janus::qiskit_transpile(ir, out_path);
+        janus::QiskitBackend qiskit_backend;
+        qiskit_backend.emit(ir, out_path);
         return 0;
     }
 
     // Direct execution via the QuEST simulation backend.
     // Produces no output file.  -o is silently ignored.
-    int exit_code = janus::quest_execute(ir, use_32bit);
-    return exit_code;
+    janus::BackendQuEST quest_backend(use_32bit);
+    return quest_backend.execute(ir);
 }
