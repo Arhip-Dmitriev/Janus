@@ -2,8 +2,8 @@
 #include "parser.hpp"
 #include "typechecker.hpp"
 #include "ir_gen.hpp"
-#include "quest_executor.hpp"
-#include "qiskit_transpiler.hpp"
+#include "backend_quest.hpp"
+#include "backend_qiskit.hpp"
 #include "error.hpp"
 
 #include <cstdio>
