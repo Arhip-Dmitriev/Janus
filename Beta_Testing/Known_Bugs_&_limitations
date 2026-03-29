@@ -2,3 +2,7 @@ Note that due to current error message limitations, the scope of bugs is hard to
 1. all 1-qubit parametrized gates may not work
 2. Qnum can only be initialized to an non-negative integer, no args, or an non-negative integer with limited space
 3.
+
+
+Limitations:
+1. Cant directly read or set an individual coefficent of a state in a qnum in superposition
