@@ -1,2 +1,4 @@
 Note that due to current error message limitations, the scope of bugs is hard to distinguish.
 1. all 1-qubit parametrized gates may not work
+2. Qnum can only be initialized to an integer, no args, or an integer with limited space
+3.
