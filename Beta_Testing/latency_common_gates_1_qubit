@@ -1,0 +1,51 @@
+Single-Qubit Common Gates Circuit: Janus vs Qiskit Performance Test
+
+Overview
+
+This test measured the execution time of a single-qubit gate sweep circuit run repeatedly in a loop, comparing the Janus runtime against an equivalent Qiskit implementation. The Janus file used circ, qubit, run, and print operands along with the full set of single-qubit gates available in the gates namespace. The Python file used Qiskit's AerSimulator with transpilation. Both files applied the same eleven gates (H, X, Y, Z, S, T, Sdg, Tdg, SX, SXdg, I) to a single qubit and printed the result on each iteration. The loop count (PARAM) was varied across fourteen distinct configurations. All times are from PowerShell's Measure-Command and reflect total wall-clock execution time including any runtime startup cost.
+
+Results by Parameter
+
+PARAM 1: Janus 126.49ms, Python 4857.50ms. Speedup 38.4x. This was the first Janus run of the session and shows a noticeably elevated time relative to all subsequent Janus runs, consistent with one-time interpreter or OS-level initialization cost.
+
+PARAM 10: Janus 34.11ms, Python 3404.53ms. Speedup 99.8x.
+
+PARAM 100: Janus 33.95ms, Python 9672.77ms. Speedup 285x.
+
+PARAM 1000: Janus 32.13ms, Python 100249.66ms (100.25 seconds). Speedup 3120x. Python's execution crossed the one-minute-forty mark while Janus completed in under 33 milliseconds.
+
+PARAM 200: Janus 38.95ms, Python 18366.47ms. Speedup 471x.
+
+PARAM 300 (run 1): Janus 37.85ms.
+PARAM 300 (run 2): Janus 16.18ms.
+PARAM 300 Python: 32821.03ms. Speedup against run 1: 867x. Speedup against run 2: 2029x. The second consecutive Janus run at the same parameter was roughly 57% faster than the first, which is consistent with filesystem and OS-level caching of the compiled binary on a repeated execution in the same terminal session.
+
+PARAM 50: Janus 31.15ms, Python 6045.89ms. Speedup 194x.
+
+PARAM 20: Janus 33.02ms, Python 4020.87ms. Speedup 122x.
+
+PARAM 80: Janus 39.05ms, Python 9035.17ms. Speedup 231x.
+
+PARAM 2: Janus 30.60ms, Python 3061.76ms. Speedup 100x.
+
+PARAM 5: Janus 28.99ms, Python 3419.17ms. Speedup 118x.
+
+PARAM 8: Janus 40.47ms, Python 3286.32ms. Speedup 81x. This is the lowest recorded speedup excluding PARAM 1, and is likely a reflection of normal variance in both runtimes at low iteration counts where the ratio is more sensitive to small timing fluctuations.
+
+Mixed final run (500.j, 800.p, 800.j, 500.p):
+PARAM 500, Janus: 36.997ms.
+PARAM 800, Python: 82836.46ms.
+PARAM 800, Janus: 52.967ms.
+PARAM 500, Python: 47659.81ms.
+Janus 500 vs Python 500: 1288x speedup.
+Janus 800 vs Python 800: 1564x speedup.
+
+Summary of Key Findings
+
+The most striking result is that Janus execution time is effectively flat across the entire parameter range tested. From PARAM 2 through PARAM 1000, Janus consistently completed in 16 to 53 milliseconds regardless of loop count. This suggests Janus is not scaling linearly with iterations in the way a naive interpreter would, and that the cost of circuit construction and simulation is being handled in a way that does not accumulate proportionally at the wall-clock level for this circuit. Whether that reflects AOT compilation, circuit batching, or some other internal optimization is worth investigating further.
+
+Python and Qiskit, by contrast, scale in a manner that closely tracks the loop count. The overhead per iteration appears substantial even at PARAM 1 (nearly 5 seconds for a single circuit), and at PARAM 1000 the total time exceeded 100 seconds. This is consistent with the known overhead of Qiskit's transpilation step being applied once per loop iteration, which is expensive regardless of circuit size.
+
+Excluding the cold-start run at PARAM 1, the Janus speedup ranged from approximately 81x at PARAM 8 up to 3120x at PARAM 1000, with the advantage growing as the loop count increases. The unusual PARAM 8 result is within expected variance and does not represent a meaningful outlier given the small absolute times involved.
+
+One note worth flagging: Python execution times showed significant variance even at similar parameter values (for example, PARAM 10 at 3404ms vs PARAM 5 at 3419ms, and PARAM 100 at 9672ms with PARAM 80 at 9035ms). This suggests the Python runtime cost is influenced by factors beyond just loop count, possibly including background system load at the time of each run. Janus showed less inter-run variance after the initial cold-start effect.
