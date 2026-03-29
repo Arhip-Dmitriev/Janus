@@ -1,2 +1,2 @@
 Note that due to current error message limitations, the scope of bugs is hard to distinguish.
-1. gates.u(a,b,c) - ?
+1. all 1-qubit parametrized gates may not work
