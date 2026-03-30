@@ -1,0 +1,9 @@
+Patch 1 Plans:
+
+Problems:
+1. cant isolate out single coefficent in a superposition state
+2. error code is not helpful
+
+Solutions:
+1. implement a state operand which returns the quantum state as a vector
+2. implement a small number of standard error codes
