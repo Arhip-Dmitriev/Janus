@@ -114,6 +114,7 @@ enum class TokenType : uint8_t {
                         // gates.x(), gates.h(), etc.
     KW_QUBITS,          // qubits(Circuit) qubit count/list              (69)
     KW_DEPTH,           // depth(Circuit)  circuit depth                  (70)
+    KW_BITLENGTH,       // bitlength(Register) qubit count of qnum/qubit
 
 
     // Built-in constant keywords
@@ -198,8 +199,8 @@ constexpr std::string_view token_type_name(TokenType t) noexcept {
         case TokenType::IDENTIFIER:           return "IDENTIFIER";
         case TokenType::KW_QUBIT:             return "KW_QUBIT";
         case TokenType::KW_CBIT:              return "KW_CBIT";
-        case TokenType::KW_QNUM:              return "KW_QNUM";
-        case TokenType::KW_CNUM:              return "KW_CNUM";
+        case TokenType::KW_QNUM:             return "KW_QNUM";
+        case TokenType::KW_CNUM:             return "KW_CNUM";
         case TokenType::KW_CSTR:              return "KW_CSTR";
         case TokenType::KW_LIST:              return "KW_LIST";
         case TokenType::KW_MATRIX:            return "KW_MATRIX";
@@ -252,6 +253,7 @@ constexpr std::string_view token_type_name(TokenType t) noexcept {
         case TokenType::KW_GATES:             return "KW_GATES";
         case TokenType::KW_QUBITS:            return "KW_QUBITS";
         case TokenType::KW_DEPTH:             return "KW_DEPTH";
+        case TokenType::KW_BITLENGTH:         return "KW_BITLENGTH";
         case TokenType::KW_PI:                return "KW_PI";
         case TokenType::KW_E:                 return "KW_E";
         case TokenType::PLUS:                 return "PLUS";
