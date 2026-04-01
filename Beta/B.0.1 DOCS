@@ -1,0 +1,16 @@
+This patch introduces two new operands for the qnum type. The first is bitlength(qnum), a unary prefix builtin that returns the number of qubits (bits) in a qnum register as a cnum. The second is amplitude indexing via qnum[x] and qnum['bstr'], which reads or writes the complex amplitude of a specific basis state within the qnum superposition. Index access by integer selects by state index in standard binary computational basis order (000=0, 001=1, 010=2, etc.). Index access by quoted binary string selects by the explicit bit pattern. Both forms return a cnum (complex). On write, the qnum is automatically renormalised after the amplitude is set. The write form z[3] = 4 or z['010'] = 4 sets the amplitude of that basis state to the given cnum value and then renormalises the full state vector. Attempting to access an index >= 2^(num_qubits) is an error. Attempting to set an amplitude with a string index whose length does not match the number of qubits in the register is an error. A string index that contains characters other than '0' and '1' is an error.
+New Syntax
+bitlength(q)   -- returns number of qubits in q as cnum
+bitlength q    -- unary prefix form
+q[3]           -- read amplitude at basis index 3, returns cnum
+q['010']       -- read amplitude at basis state |010>, returns cnum
+q[3] = v      -- set amplitude at basis index 3 to v, then renormalise
+q['010'] = v  -- set amplitude at basis state |010> to v, then renormalise
+Return Types
+bitlength: always cnum.
+qnum[x] (read): cnum (complex amplitude, imaginary part may be zero).
+qnum[x] = v (write): cnum (the value assigned, before renormalisation).
+Design Notes
+The existing IndexExpr AST node is reused for qnum amplitude access. When the type checker identifies that the object of an IndexExpr is a qnum and the index is a single value (integer or string literal), it resolves the result type as cnum. The type checker also permits qnum index assignment (IRAssign with IRIndex target on a qnum). The string-index form with a quoted binary string is resolved at runtime, not at the string-literal level; the string is treated as a binary address. Renormalisation after write uses the existing QuantumState::normalise method. bitlength is a new keyword added as KW_BITLENGTH throughout the pipeline.
+Files Affected
+token.hpp, lexer.cpp, ir.hpp, parser.cpp, typechecker.cpp, ir_gen.cpp, quest_backend.cpp, qiskit_backend.cpp, quantum_state.hpp, quantum_state.cpp
