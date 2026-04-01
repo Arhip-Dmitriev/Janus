@@ -85,6 +85,7 @@ static const std::unordered_map<std::string, TokenType>& keyword_map() {
         {"gates",        TokenType::KW_GATES},
         {"qubits",       TokenType::KW_QUBITS},
         {"depth",        TokenType::KW_DEPTH},
+        {"bitlength",    TokenType::KW_BITLENGTH},
 
         // Built-in constants
         {"pi",           TokenType::KW_PI},
