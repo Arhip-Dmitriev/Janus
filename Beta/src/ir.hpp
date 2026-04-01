@@ -125,7 +125,8 @@ enum class IRBuiltinOp : uint8_t {
     EVECS,          // evecs(Matrix)                                  (59)
     GATES,          // gates(Circuit) list of gates                   (68)
     QUBITS,         // qubits(Circuit) qubit count/list              (69)
-    DEPTH           // depth(Circuit) circuit depth                   (70)
+    DEPTH,          // depth(Circuit) circuit depth                   (70)
+    BITLENGTH       // bitlength(Register) qubit count of qnum/qubit
 };
 
 // Returns a human-readable name for a built-in operand.
@@ -153,6 +154,7 @@ constexpr std::string_view ir_builtin_op_name(IRBuiltinOp op) noexcept {
         case IRBuiltinOp::GATES:         return "gates";
         case IRBuiltinOp::QUBITS:        return "qubits";
         case IRBuiltinOp::DEPTH:         return "depth";
+        case IRBuiltinOp::BITLENGTH:     return "bitlength";
     }
     return "unknown";
 }
@@ -294,6 +296,44 @@ struct IRIndex final : IRExpr {
           indices(std::move(idx)) {}
 };
 
+// Quantum amplitude read: qnum_or_qubit[index].
+// Distinct from IRIndex so both backends can dispatch on quantum amplitude
+// access specifically.  The index is a cnum integer or a cstr binary
+// string at runtime.  The result type is CNUM because a raw amplitude is
+// a complex scalar; coercion to QNUM when the read is used in a quantum
+// context is handled downstream by the existing numeric-to-quantum
+// assignment path.
+struct IRQnumIndex final : IRExpr {
+    IRExprPtr object;
+    IRExprPtr index;
+
+    IRQnumIndex(uint32_t ln, IRExprPtr obj, IRExprPtr idx, TypeInfo ti)
+        : IRExpr(ti, ln),
+          object(std::move(obj)),
+          index(std::move(idx)) {}
+};
+
+// Quantum amplitude write: qnum_or_qubit[index] = value.
+// Distinct from IRAssign so both backends can dispatch on quantum
+// amplitude write specifically.  The value may be CNUM or QNUM at the
+// IR level; if QNUM, the backend measures it to produce a scalar
+// amplitude.  After the write the register is automatically renormalised.
+// The result type is CNUM, representing the scalar amplitude that was
+// written (after measuring value if it was QNUM, before renormalisation
+// of the register).
+struct IRQnumIndexAssign final : IRExpr {
+    IRExprPtr object;
+    IRExprPtr index;
+    IRExprPtr value;
+
+    IRQnumIndexAssign(uint32_t ln, IRExprPtr obj, IRExprPtr idx,
+                      IRExprPtr val, TypeInfo ti)
+        : IRExpr(ti, ln),
+          object(std::move(obj)),
+          index(std::move(idx)),
+          value(std::move(val)) {}
+};
+
 
 
 // IR expression nodes :: Assignment
@@ -408,7 +448,8 @@ struct IRCall final : IRExpr {
 // Covers every Beta built-in that uses function-call or unary-prefix
 // syntax at the source level (measure, peek, state, expect, ctrle, run,
 // runh, isunitary, sameoutput, print, delete, sin, cos, numberofgates,
-// det, transpose, transposec, evals, evecs, gates, qubits, depth).
+// det, transpose, transposec, evals, evecs, gates, qubits, depth,
+// bitlength).
 struct IRBuiltinCall final : IRExpr {
     IRBuiltinOp            op;
     std::vector<IRExprPtr> args;
