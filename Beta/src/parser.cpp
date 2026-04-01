@@ -408,7 +408,8 @@ ExprPtr Parser::parse_type_cast() {
 
 //  Level 5: Unary prefix
 //  Handles: not  !  <<  >>  and the builtin prefix operands
-//  (det, transpose, transposec, evals, evecs, gates, qubits, depth).
+//  (det, transpose, transposec, evals, evecs, gates, qubits, depth,
+//  bitlength).
 //  Unary minus isnt handled here; it is at the parse_unary_minus level
 //  so that -x^2 = -(x^2).  However, minus IS handled here as well so
 //  that constructs like 5 ^ -3 work (the exponentiation parser calls
@@ -486,8 +487,9 @@ ExprPtr Parser::parse_unary_prefix() {
             ln, TokenType::KW_GATES, std::move(args));
     }
 
-    // qubits and depth: builtin call with parens or unary prefix.
-    if (check(TokenType::KW_QUBITS) || check(TokenType::KW_DEPTH)) {
+    // qubits, depth, and bitlength: builtin call with parens or unary prefix.
+    if (check(TokenType::KW_QUBITS) || check(TokenType::KW_DEPTH) ||
+        check(TokenType::KW_BITLENGTH)) {
         uint32_t ln = current_line();
         TokenType op_type = peek().type;
 
@@ -586,7 +588,7 @@ ExprPtr Parser::parse_postfix() {
 ExprPtr Parser::parse_primary() {
     set_error_line(current_line());
 
-    // -- Level 2: Literals 
+    // -- Level 2: Literals --
 
     // Integer literal.
     if (check(TokenType::INTEGER_LITERAL)) {
@@ -662,7 +664,7 @@ ExprPtr Parser::parse_primary() {
         return std::make_unique<ELiteralExpr>(ln);
     }
 
-    // -- Level 3: Function-call style built-in operands 
+    // -- Level 3: Function-call style built-in operands --
 
     if (is_function_call_builtin(peek().type)) {
         uint32_t ln = current_line();
@@ -672,7 +674,7 @@ ExprPtr Parser::parse_primary() {
         return std::make_unique<BuiltinCallExpr>(ln, op.type, std::move(args));
     }
 
-    // -- Type constructors 
+    // -- Type constructors --
     // type_keyword ( args )
     // Except KW_FUNCTION which is a function definition.
 
@@ -689,14 +691,14 @@ ExprPtr Parser::parse_primary() {
                                                     std::move(args));
     }
 
-    // -- Control flow expressions 
+    // -- Control flow expressions --
 
     if (check(TokenType::KW_IF))      return parse_if_expr();
     if (check(TokenType::KW_FOR))     return parse_for_expr();
     if (check(TokenType::KW_WHILE))   return parse_while_expr();
     if (check(TokenType::KW_FOREACH)) return parse_foreach_expr();
 
-    // -- Identifier 
+    // -- Identifier --
 
     if (check(TokenType::IDENTIFIER)) {
         uint32_t ln = current_line();
@@ -704,7 +706,7 @@ ExprPtr Parser::parse_primary() {
         return std::make_unique<IdentifierExpr>(ln, std::move(tok.lexeme));
     }
 
-    // -- Level 1: Parenthesised grouping 
+    // -- Level 1: Parenthesised grouping --
 
     if (check(TokenType::LEFT_PAREN)) {
         advance();  // consume (
@@ -713,7 +715,7 @@ ExprPtr Parser::parse_primary() {
         return expr;
     }
 
-    // -- Matrix / list literal  [ ... ] -
+    // -- Matrix / list literal  [ ... ] --
 
     if (check(TokenType::LEFT_BRACKET)) {
         return parse_matrix_literal();
@@ -1032,6 +1034,7 @@ bool Parser::is_unary_prefix_builtin(TokenType type) {
         case TokenType::KW_TRANSPOSEC:
         case TokenType::KW_EVALS:
         case TokenType::KW_EVECS:
+        case TokenType::KW_BITLENGTH:
             return true;
         default:
             return false;
