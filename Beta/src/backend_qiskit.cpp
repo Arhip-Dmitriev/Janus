@@ -58,6 +58,8 @@ private:
     std::string emit_interpolated_string(const IRInterpolatedString& e);
     std::string emit_variable(const IRVariable& e);
     std::string emit_index(const IRIndex& e);
+    std::string emit_qnum_index(const IRQnumIndex& e);
+    std::string emit_qnum_index_assign(const IRQnumIndexAssign& e);
     std::string emit_assign(const IRAssign& e);
     std::string emit_binary(const IRBinary& e);
     std::string emit_unary(const IRUnary& e);
@@ -138,6 +140,7 @@ std::string Emitter::py_double(double v) {
 
 bool Emitter::is_stmt_expression(const IRExpr& expr) {
     return dynamic_cast<const IRAssign*>(&expr) ||
+           dynamic_cast<const IRQnumIndexAssign*>(&expr) ||
            dynamic_cast<const IRIf*>(&expr) ||
            dynamic_cast<const IRFor*>(&expr) ||
            dynamic_cast<const IRWhile*>(&expr) ||
@@ -533,6 +536,10 @@ std::string Emitter::emit_expr(const IRExpr& expr) {
         return emit_variable(*e);
     if (const auto* e = dynamic_cast<const IRIndex*>(&expr))
         return emit_index(*e);
+    if (const auto* e = dynamic_cast<const IRQnumIndex*>(&expr))
+        return emit_qnum_index(*e);
+    if (const auto* e = dynamic_cast<const IRQnumIndexAssign*>(&expr))
+        return emit_qnum_index_assign(*e);
     if (const auto* e = dynamic_cast<const IRAssign*>(&expr))
         return emit_assign(*e);
     if (const auto* e = dynamic_cast<const IRBinary*>(&expr))
@@ -646,6 +653,70 @@ std::string Emitter::emit_index(const IRIndex& e) {
         return obj + "[int(" + row + "), int(" + col + ")]";
     }
     report_error(e.line);
+}
+
+
+// Quantum amplitude read: qnum_or_qubit[index].
+
+std::string Emitter::emit_qnum_index(const IRQnumIndex& e) {
+    std::string obj = emit_expr(*e.object);
+    // A CSTR string index is detectable as an IRStringLiteral containing
+    // a binary string.  Emit int('BSTR', 2) for binary address lookup.
+    if (const auto* str_lit = dynamic_cast<const IRStringLiteral*>(e.index.get())) {
+        return obj + "[int('" + str_lit->value + "', 2)]";
+    }
+    // CNUM integer index.
+    std::string idx = emit_expr(*e.index);
+    return obj + "[int(" + idx + ")]";
+}
+
+
+// Quantum amplitude write: qnum_or_qubit[index] = value.
+
+std::string Emitter::emit_qnum_index_assign(const IRQnumIndexAssign& e) {
+    // The object is always an IRVariable (enforced by the type checker).
+    auto* target_var = dynamic_cast<const IRVariable*>(e.object.get());
+    std::string var_name = target_var->name;
+
+    // Compute index expression.
+    std::string idx_expr;
+    if (const auto* str_lit = dynamic_cast<const IRStringLiteral*>(e.index.get())) {
+        idx_expr = "int('" + str_lit->value + "', 2)";
+    } else {
+        std::string idx = emit_expr(*e.index);
+        idx_expr = "int(" + idx + ")";
+    }
+
+    // Evaluate the value.  If the value is a quantum register, measure it
+    // first to obtain a classical scalar, mirroring the runtime
+    // measurement-on-classical-assignment rule.
+    std::string scalar;
+    JanusType val_type = e.value->result_type.type;
+    if (val_type == JanusType::QNUM || val_type == JanusType::QUBIT) {
+        std::string val_expr = emit_expr(*e.value);
+        std::string tv = fresh_temp();
+        std::string ts = fresh_temp();
+        line(tv + ", " + ts + " = _janus_measure(" + val_expr + ")");
+        // Update the source variable with the collapsed state.
+        if (const auto* val_var = dynamic_cast<const IRVariable*>(e.value.get())) {
+            line(val_var->name + " = " + ts);
+        }
+        scalar = tv;
+    } else {
+        scalar = emit_expr(*e.value);
+    }
+
+    // Set the amplitude at the given index and renormalise using numpy.
+    std::string td = fresh_temp();
+    std::string tn = fresh_temp();
+    line(td + " = " + var_name + ".data.copy()");
+    line(td + "[" + idx_expr + "] = " + scalar);
+    line(tn + " = np.linalg.norm(" + td + ")");
+    line(var_name + " = Statevector(" + td + " / " + tn + ")");
+
+    // The expression value is the scalar that was written, consistent
+    // with how other assignment expressions are emitted.
+    return scalar;
 }
 
 
@@ -892,6 +963,9 @@ std::string Emitter::emit_builtin_call(const IRBuiltinCall& e) {
             return "_janus_qubits(" + args[0] + ")";
         case IRBuiltinOp::DEPTH:
             return "_janus_depth(" + args[0] + ")";
+        case IRBuiltinOp::BITLENGTH:
+            // Statevector objects expose .num_qubits for the qubit count.
+            return args[0] + ".num_qubits";
     }
     report_error(e.line);
 }
