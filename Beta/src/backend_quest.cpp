@@ -151,6 +151,107 @@ JanusValue BackendQuEST::eval_expr(const IRExpr& expr) {
         return eval_variable(*e);
     if (auto* e = dynamic_cast<const IRIndex*>(&expr))
         return eval_index(*e);
+
+    // Quantum amplitude read: qnum_or_qubit[index].
+    if (auto* e = dynamic_cast<const IRQnumIndex*>(&expr)) {
+        JanusValue obj = eval_expr(*e->object);
+        JanusValue idx_val = eval_expr(*e->index);
+        if (!obj.quantum_val) report_error(e->line);
+        uint32_t nq = obj.quantum_val->num_qubits();
+        uint64_t basis_index = 0;
+        if (idx_val.type_info.type == JanusType::CNUM) {
+            basis_index = static_cast<uint64_t>(idx_val.real_val);
+        } else if (idx_val.type_info.type == JanusType::CSTR) {
+            const std::string& bstr = idx_val.str_val;
+            if (static_cast<uint32_t>(bstr.size()) != nq)
+                report_error(e->line);
+            for (char ch : bstr) {
+                if (ch != '0' && ch != '1')
+                    report_error(e->line);
+            }
+            basis_index = 0;
+            for (char ch : bstr) {
+                basis_index = (basis_index << 1) | static_cast<uint64_t>(ch == '1' ? 1 : 0);
+            }
+        } else {
+            report_error(e->line);
+        }
+        uint64_t dim = uint64_t{1} << nq;
+        if (basis_index >= dim) report_error(e->line);
+        std::complex<double> amp = obj.quantum_val->amplitude(basis_index);
+        return JanusValue::make_cnum_complex(
+            static_cast<float>(amp.real()),
+            static_cast<float>(amp.imag()));
+    }
+
+    // Quantum amplitude write: qnum_or_qubit[index] = value.
+    if (auto* e = dynamic_cast<const IRQnumIndexAssign*>(&expr)) {
+        // Resolve the basis index from the index expression.
+        JanusValue idx_val = eval_expr(*e->index);
+
+        // The object is always an IRVariable (enforced by the type checker).
+        auto* target_var = dynamic_cast<const IRVariable*>(e->object.get());
+        if (!target_var) report_error(e->line);
+
+        JanusValue* target_ptr = scope_.lookup(target_var->name);
+        if (!target_ptr) report_error(e->line);
+        if (!target_ptr->quantum_val) report_error(e->line);
+
+        uint32_t nq = target_ptr->quantum_val->num_qubits();
+        uint64_t basis_index = 0;
+        if (idx_val.type_info.type == JanusType::CNUM) {
+            basis_index = static_cast<uint64_t>(idx_val.real_val);
+        } else if (idx_val.type_info.type == JanusType::CSTR) {
+            const std::string& bstr = idx_val.str_val;
+            if (static_cast<uint32_t>(bstr.size()) != nq)
+                report_error(e->line);
+            for (char ch : bstr) {
+                if (ch != '0' && ch != '1')
+                    report_error(e->line);
+            }
+            basis_index = 0;
+            for (char ch : bstr) {
+                basis_index = (basis_index << 1) | static_cast<uint64_t>(ch == '1' ? 1 : 0);
+            }
+        } else {
+            report_error(e->line);
+        }
+        uint64_t dim = uint64_t{1} << nq;
+        if (basis_index >= dim) report_error(e->line);
+
+        // Evaluate the value to assign.
+        JanusValue val = eval_expr(*e->value);
+
+        std::complex<double> scalar_amp;
+        if (val.type_info.type == JanusType::QNUM ||
+            val.type_info.type == JanusType::QUBIT) {
+            // Quantum value: measure to obtain a classical outcome,
+            // consistent with Janus rule that assigning quantum into
+            // classical context causes measurement.
+            if (!val.quantum_val) report_error(e->line);
+            uint64_t outcome = val.quantum_val->measure(e->line);
+            scalar_amp = std::complex<double>(
+                static_cast<double>(outcome), 0.0);
+        } else if (val.type_info.type == JanusType::CNUM) {
+            scalar_amp = std::complex<double>(val.real_val, val.imag_val);
+        } else {
+            report_error(e->line);
+        }
+
+        // Copy the target value, modify the amplitude, normalise, and
+        // write back to the scope.
+        JanusValue target_copy = *target_ptr;
+        target_copy.quantum_val->amplitude(basis_index) = scalar_amp;
+        target_copy.quantum_val->normalise(e->line);
+        scope_.assign(target_var->name, std::move(target_copy), e->line);
+
+        // Return a CNUM representing the amplitude that was written
+        // (before renormalisation).
+        return JanusValue::make_cnum_complex(
+            static_cast<float>(scalar_amp.real()),
+            static_cast<float>(scalar_amp.imag()));
+    }
+
     if (auto* e = dynamic_cast<const IRAssign*>(&expr))
         return eval_assign(*e);
     if (auto* e = dynamic_cast<const IRBinary*>(&expr))
@@ -478,34 +579,23 @@ JanusValue BackendQuEST::binary_add(const JanusValue& lhs,
         uint64_t cint = (cv >= 0.0) ? static_cast<uint64_t>(cv) : 0;
         uint32_t nq = qubits_for_value(cint);
         QuantumState cqs(nq, cint, line);
-        QuantumState res = qval.quantum_val->add(cqs, line);
+        QuantumState res = lq
+            ? lhs.quantum_val->add(cqs, line)
+            : cqs.add(*rhs.quantum_val, line);
         apply_p32(res);
-        if (is_quantum(result_type)) {
+        if (is_quantum(result_type))
             return JanusValue::make_qnum(std::move(res));
-        }
         uint64_t outcome = res.measure(line);
         return JanusValue::make_cnum(static_cast<double>(outcome));
     }
 
-    // Matrix addition.
-    if (lhs.type_info.type == JanusType::MATRIX ||
-        rhs.type_info.type == JanusType::MATRIX) {
-        if (lhs.type_info.type == JanusType::MATRIX &&
-            rhs.type_info.type == JanusType::MATRIX) {
-            if (!lhs.matrix_data || !rhs.matrix_data) report_error(line);
-            uint32_t rows = lhs.type_info.matrix_rows;
-            uint32_t cols = lhs.type_info.matrix_cols;
-            if (rows != rhs.type_info.matrix_rows ||
-                cols != rhs.type_info.matrix_cols) report_error(line);
-            std::vector<std::complex<double>> data(rows * cols);
-            for (uint32_t i = 0; i < rows * cols; ++i)
-                data[i] = (*lhs.matrix_data)[i] + (*rhs.matrix_data)[i];
-            return JanusValue::make_matrix(rows, cols, std::move(data));
-        }
-        report_error(line);
+    // String concatenation.
+    if (lhs.type_info.type == JanusType::CSTR ||
+        rhs.type_info.type == JanusType::CSTR) {
+        return JanusValue::make_cstr(lhs.to_string() + rhs.to_string());
     }
 
-    // Classical numeric addition.
+    // Classical arithmetic.
     double result = val_to_real(lhs, line) + val_to_real(rhs, line);
     if (result_type == JanusType::CBIT)
         return JanusValue::make_cbit(result != 0.0 ? 1 : 0);
@@ -545,18 +635,6 @@ JanusValue BackendQuEST::binary_sub(const JanusValue& lhs,
         uint64_t outcome = res.measure(line);
         return JanusValue::make_cnum(static_cast<double>(outcome));
     }
-    if (lhs.type_info.type == JanusType::MATRIX &&
-        rhs.type_info.type == JanusType::MATRIX) {
-        if (!lhs.matrix_data || !rhs.matrix_data) report_error(line);
-        uint32_t rows = lhs.type_info.matrix_rows;
-        uint32_t cols = lhs.type_info.matrix_cols;
-        if (rows != rhs.type_info.matrix_rows ||
-            cols != rhs.type_info.matrix_cols) report_error(line);
-        std::vector<std::complex<double>> data(rows * cols);
-        for (uint32_t i = 0; i < rows * cols; ++i)
-            data[i] = (*lhs.matrix_data)[i] - (*rhs.matrix_data)[i];
-        return JanusValue::make_matrix(rows, cols, std::move(data));
-    }
     double result = val_to_real(lhs, line) - val_to_real(rhs, line);
     if (result_type == JanusType::CBIT)
         return JanusValue::make_cbit(result != 0.0 ? 1 : 0);
@@ -567,6 +645,32 @@ JanusValue BackendQuEST::binary_sub(const JanusValue& lhs,
 JanusValue BackendQuEST::binary_mul(const JanusValue& lhs,
                                     const JanusValue& rhs,
                                     JanusType result_type, uint32_t line) {
+    // Matrix multiplication.
+    if ((lhs.type_info.type == JanusType::MATRIX ||
+         lhs.type_info.type == JanusType::GATE) &&
+        (rhs.type_info.type == JanusType::MATRIX ||
+         rhs.type_info.type == JanusType::GATE)) {
+        if (!lhs.matrix_data || !rhs.matrix_data) report_error(line);
+        uint32_t lr = lhs.type_info.matrix_rows;
+        uint32_t lc = lhs.type_info.matrix_cols;
+        uint32_t rr = rhs.type_info.matrix_rows;
+        uint32_t rc = rhs.type_info.matrix_cols;
+        if (lc != rr) report_error(line);
+        std::vector<std::complex<double>> data(lr * rc);
+        for (uint32_t i = 0; i < lr; ++i)
+            for (uint32_t j = 0; j < rc; ++j) {
+                std::complex<double> sum{0.0, 0.0};
+                for (uint32_t k = 0; k < lc; ++k)
+                    sum += (*lhs.matrix_data)[i * lc + k] *
+                           (*rhs.matrix_data)[k * rc + j];
+                data[i * rc + j] = sum;
+            }
+        if (result_type == JanusType::GATE)
+            return JanusValue::make_gate(
+                lhs.type_info.width, std::move(data));
+        return JanusValue::make_matrix(lr, rc, std::move(data));
+    }
+
     bool lq = is_quantum(lhs.type_info.type);
     bool rq = is_quantum(rhs.type_info.type);
 
@@ -587,29 +691,14 @@ JanusValue BackendQuEST::binary_mul(const JanusValue& lhs,
         uint64_t cint = (cv >= 0.0) ? static_cast<uint64_t>(cv) : 0;
         uint32_t nq = qubits_for_value(cint);
         QuantumState cqs(nq, cint, line);
-        QuantumState res = qval.quantum_val->multiply(cqs, line);
+        QuantumState res = lq
+            ? lhs.quantum_val->multiply(cqs, line)
+            : cqs.multiply(*rhs.quantum_val, line);
         apply_p32(res);
         if (is_quantum(result_type))
             return JanusValue::make_qnum(std::move(res));
         uint64_t outcome = res.measure(line);
         return JanusValue::make_cnum(static_cast<double>(outcome));
-    }
-    // Matrix multiplication.
-    if (lhs.type_info.type == JanusType::MATRIX &&
-        rhs.type_info.type == JanusType::MATRIX) {
-        if (!lhs.matrix_data || !rhs.matrix_data) report_error(line);
-        uint32_t lr = lhs.type_info.matrix_rows;
-        uint32_t lc = lhs.type_info.matrix_cols;
-        uint32_t rc = rhs.type_info.matrix_cols;
-        if (lc != rhs.type_info.matrix_rows) report_error(line);
-        std::vector<std::complex<double>> data(lr * rc, {0.0, 0.0});
-        for (uint32_t i = 0; i < lr; ++i)
-            for (uint32_t j = 0; j < rc; ++j)
-                for (uint32_t k = 0; k < lc; ++k)
-                    data[i * rc + j] +=
-                        (*lhs.matrix_data)[i * lc + k] *
-                        (*rhs.matrix_data)[k * rc + j];
-        return JanusValue::make_matrix(lr, rc, std::move(data));
     }
     double result = val_to_real(lhs, line) * val_to_real(rhs, line);
     if (result_type == JanusType::CBIT)
@@ -857,6 +946,15 @@ JanusValue BackendQuEST::binary_ge(const JanusValue& lhs,
 // Bitwise operators
 
 
+static std::optional<JanusType> unary_bitwise_result_type(JanusType t) {
+    if (t == JanusType::CBIT || t == JanusType::QUBIT)
+        return JanusType::CBIT;
+    if (t == JanusType::CNUM || t == JanusType::QNUM)
+        return JanusType::CNUM;
+    return std::nullopt;
+}
+
+
 JanusValue BackendQuEST::binary_bitwise(const JanusValue& lhs,
                                         const JanusValue& rhs,
                                         IRBinaryOp op, uint32_t line) {
@@ -872,77 +970,28 @@ JanusValue BackendQuEST::binary_bitwise(const JanusValue& lhs,
         case IRBinaryOp::XNOR: result = ~(lv ^ rv); break;
         default: report_error(line);
     }
-    auto opt = bitwise_result_type(lhs.type_info.type, rhs.type_info.type);
-    if (!opt) report_error(line);
-    JanusType rt = opt.value();
-    if (rt == JanusType::CBIT)
+    // If both operands are CBIT/QUBIT, produce CBIT.
+    if ((lhs.type_info.type == JanusType::CBIT ||
+         lhs.type_info.type == JanusType::QUBIT) &&
+        (rhs.type_info.type == JanusType::CBIT ||
+         rhs.type_info.type == JanusType::QUBIT))
         return JanusValue::make_cbit(result != 0 ? 1 : 0);
-    if (rt == JanusType::QUBIT) {
-        uint64_t basis = (result != 0) ? 1 : 0;
-        QuantumState qs(1, basis, line);
-        return JanusValue::make_qubit(std::move(qs));
-    }
-    if (rt == JanusType::QNUM) {
-        uint64_t val = static_cast<uint64_t>(result);
-        return JanusValue::make_qnum(val, line);
-    }
     return JanusValue::make_cnum(static_cast<double>(result));
 }
-
-
-// Tensor product
 
 
 JanusValue BackendQuEST::binary_tensor(const JanusValue& lhs,
                                        const JanusValue& rhs,
                                        uint32_t line) {
     // Quantum tensor product.
-    if ((is_quantum(lhs.type_info.type) || is_numeric(lhs.type_info.type)) &&
-        (is_quantum(rhs.type_info.type) || is_numeric(rhs.type_info.type))) {
-        // Convert both to QuantumState.
-        QuantumState qs_l;
-        if (lhs.quantum_val) {
-            qs_l = *lhs.quantum_val;
-        } else {
-            uint64_t lv = static_cast<uint64_t>(val_to_real(lhs, line));
-            uint32_t nq = qubits_for_value(lv);
-            qs_l = QuantumState(nq, lv, line);
-        }
-        QuantumState qs_r;
-        if (rhs.quantum_val) {
-            qs_r = *rhs.quantum_val;
-        } else {
-            uint64_t rv = static_cast<uint64_t>(val_to_real(rhs, line));
-            uint32_t nq = qubits_for_value(rv);
-            qs_r = QuantumState(nq, rv, line);
-        }
-        QuantumState result = tensor_product(qs_l, qs_r);
-        apply_p32(result);
-        return JanusValue::make_qnum(std::move(result));
+    if (is_quantum(lhs.type_info.type) && is_quantum(rhs.type_info.type)) {
+        if (!lhs.quantum_val || !rhs.quantum_val) report_error(line);
+        QuantumState tp = tensor_product(*lhs.quantum_val, *rhs.quantum_val);
+        apply_p32(tp);
+        return JanusValue::make_qnum(std::move(tp));
     }
 
-    // Matrix tensor (Kronecker) product.
-    if (lhs.type_info.type == JanusType::MATRIX &&
-        rhs.type_info.type == JanusType::MATRIX) {
-        if (!lhs.matrix_data || !rhs.matrix_data) report_error(line);
-        uint32_t lr = lhs.type_info.matrix_rows;
-        uint32_t lc = lhs.type_info.matrix_cols;
-        uint32_t rr = rhs.type_info.matrix_rows;
-        uint32_t rc = rhs.type_info.matrix_cols;
-        uint32_t nr = lr * rr;
-        uint32_t nc = lc * rc;
-        std::vector<std::complex<double>> data(nr * nc);
-        for (uint32_t i = 0; i < lr; ++i)
-            for (uint32_t j = 0; j < lc; ++j)
-                for (uint32_t k = 0; k < rr; ++k)
-                    for (uint32_t l = 0; l < rc; ++l)
-                        data[(i * rr + k) * nc + (j * rc + l)] =
-                            (*lhs.matrix_data)[i * lc + j] *
-                            (*rhs.matrix_data)[k * rc + l];
-        return JanusValue::make_matrix(nr, nc, std::move(data));
-    }
-
-    // List tensor product (cartesian product).
+    // List-based tensor product.
     if (lhs.type_info.type == JanusType::LIST ||
         rhs.type_info.type == JanusType::LIST) {
         // Conservative: return a matrix representation of outer product.
@@ -1083,31 +1132,9 @@ JanusValue BackendQuEST::perform_cast(const JanusValue& val,
             elems.push_back(val);
             return JanusValue::make_list(std::move(elems));
         }
-        case JanusType::MATRIX: {
-            double v = val_to_real(val, line);
-            std::vector<std::complex<double>> data = {{v, 0.0}};
-            return JanusValue::make_matrix(1, 1, std::move(data));
-        }
-        case JanusType::GATE: {
-            if (source == JanusType::MATRIX && val.matrix_data) {
-                uint32_t rows = val.type_info.matrix_rows;
-                uint32_t cols = val.type_info.matrix_cols;
-                if (rows != cols || rows == 0) report_error(line);
-                return gate_library::make_validated_gate(
-                    *val.matrix_data, rows, line);
-            }
-            report_error(line);
-        }
-        case JanusType::CIRC:
-        case JanusType::BLOCK:
-        case JanusType::FUNCTION:
-            // These casts are allowed by the type checker but may fail
-            // at runtime if the value cannot be converted.
-            report_error(line);
-        case JanusType::NULL_TYPE:
+        default:
             report_error(line);
     }
-    report_error(line);
 }
 
 
@@ -1116,32 +1143,35 @@ JanusValue BackendQuEST::perform_cast(const JanusValue& val,
 
 JanusValue BackendQuEST::eval_matrix_literal(const IRMatrixLiteral& e) {
     uint32_t rows = static_cast<uint32_t>(e.rows.size());
-    if (rows == 0) return JanusValue::make_matrix(0, 0, {});
+    if (rows == 0)
+        return JanusValue::make_list({});
 
     uint32_t cols = static_cast<uint32_t>(e.rows[0].size());
 
-    // Check if this is actually a list of lists (containing non-numeric
-    // elements like gates).
-    bool has_non_numeric = false;
-    std::vector<std::vector<JanusValue>> evaluated_rows;
-    evaluated_rows.resize(rows);
-
+    // Evaluate all elements.
+    std::vector<std::vector<JanusValue>> evaluated_rows(rows);
+    bool all_numeric = true;
     for (uint32_t r = 0; r < rows; ++r) {
-        if (static_cast<uint32_t>(e.rows[r].size()) != cols)
-            report_error(e.line);
-        evaluated_rows[r].reserve(cols);
-        for (uint32_t c = 0; c < cols; ++c) {
-            JanusValue val = eval_expr(*e.rows[r][c]);
-            if (!is_numeric(val.type_info.type) &&
-                val.type_info.type != JanusType::NULL_TYPE) {
-                has_non_numeric = true;
-            }
-            evaluated_rows[r].push_back(std::move(val));
+        evaluated_rows[r].reserve(e.rows[r].size());
+        for (const auto& elem : e.rows[r]) {
+            JanusValue v = eval_expr(*elem);
+            if (!is_numeric(v.type_info.type) &&
+                !is_quantum(v.type_info.type) &&
+                v.type_info.type != JanusType::NULL_TYPE)
+                all_numeric = false;
+            evaluated_rows[r].push_back(std::move(v));
         }
     }
 
-    if (has_non_numeric) {
-        // Return as a list of lists.
+    // Single row: might be a list literal.
+    if (rows == 1 && !all_numeric) {
+        return JanusValue::make_list(std::move(evaluated_rows[0]));
+    }
+    if (rows == 1 && cols == 1) {
+        return evaluated_rows[0][0];
+    }
+    if (!all_numeric) {
+        // Non-numeric multi-row: build a list of lists.
         std::vector<JanusValue> outer;
         for (auto& row : evaluated_rows) {
             outer.push_back(JanusValue::make_list(std::move(row)));
@@ -1251,6 +1281,13 @@ JanusValue BackendQuEST::eval_builtin_call(const IRBuiltinCall& e) {
         case IRBuiltinOp::GATES:         return builtin_gates(args, e.line);
         case IRBuiltinOp::QUBITS:        return builtin_qubits(args, e.line);
         case IRBuiltinOp::DEPTH:         return builtin_depth(args, e.line);
+        case IRBuiltinOp::BITLENGTH: {
+            if (args.empty()) report_error(e.line);
+            const auto& arg = args[0];
+            if (!arg.quantum_val) report_error(e.line);
+            return JanusValue::make_cnum(
+                static_cast<double>(arg.quantum_val->num_qubits()));
+        }
     }
     report_error(e.line);
 }
@@ -1702,10 +1739,8 @@ JanusValue BackendQuEST::builtin_state(
         const std::vector<JanusValue>& args, uint32_t line) {
     if (args.empty()) report_error(line);
     const auto& reg = args[0];
-    if (!is_quantum(reg.type_info.type)) {
-        return JanusValue::make_cstr(reg.to_string());
-    }
-    if (!reg.quantum_val) return JanusValue::make_cstr("|0>");
+    if (!is_quantum(reg.type_info.type) || !reg.quantum_val)
+        report_error(line);
     return JanusValue::make_cstr(reg.quantum_val->to_dirac_string());
 }
 
@@ -1713,30 +1748,31 @@ JanusValue BackendQuEST::builtin_state(
 JanusValue BackendQuEST::builtin_expect(
         const std::vector<JanusValue>& args, uint32_t line) {
     if (args.size() < 2) report_error(line);
-    const auto& mat_val = args[0];
+    const auto& observable = args[0];
     const auto& reg = args[1];
-
-    if ((mat_val.type_info.type != JanusType::MATRIX &&
-         mat_val.type_info.type != JanusType::GATE) ||
-        !mat_val.matrix_data)
+    if ((observable.type_info.type != JanusType::MATRIX &&
+         observable.type_info.type != JanusType::GATE) ||
+        !observable.matrix_data)
         report_error(line);
     if (!is_quantum(reg.type_info.type) || !reg.quantum_val)
         report_error(line);
 
-    const auto& M = *mat_val.matrix_data;
-    const auto& psi = reg.quantum_val->amplitudes();
-    uint64_t dim = psi.size();
-    uint32_t mdim = mat_val.type_info.matrix_rows;
+    uint32_t dim = observable.type_info.matrix_rows;
+    uint64_t state_dim = reg.quantum_val->num_amplitudes();
+    if (static_cast<uint64_t>(dim) != state_dim) report_error(line);
 
-    if (static_cast<uint64_t>(mdim) != dim) report_error(line);
-
-    // <psi|M|psi> = sum_ij conj(psi_i) * M_ij * psi_j
-    std::complex<double> expec{0.0, 0.0};
-    for (uint64_t i = 0; i < dim; ++i)
-        for (uint64_t j = 0; j < dim; ++j)
-            expec += std::conj(psi[i]) * M[i * dim + j] * psi[j];
-
-    return JanusValue::make_cnum(expec.real());
+    // <psi|O|psi>
+    const auto& amps = reg.quantum_val->amplitudes();
+    const auto& mat = *observable.matrix_data;
+    std::complex<double> expectation{0.0, 0.0};
+    for (uint32_t i = 0; i < dim; ++i) {
+        std::complex<double> Opsi_i{0.0, 0.0};
+        for (uint32_t j = 0; j < dim; ++j) {
+            Opsi_i += mat[i * dim + j] * amps[j];
+        }
+        expectation += std::conj(amps[i]) * Opsi_i;
+    }
+    return JanusValue::make_cnum(expectation.real());
 }
 
 
@@ -1744,166 +1780,43 @@ JanusValue BackendQuEST::builtin_ctrle(
         const std::vector<JanusValue>& args, uint32_t line) {
     if (args.size() < 2) report_error(line);
     const auto& gate_val = args[0];
+    const auto& ctrl_val = args[1];
+
     if (gate_val.type_info.type != JanusType::GATE || !gate_val.matrix_data)
         report_error(line);
+    uint32_t gw = gate_val.type_info.width;
+    uint32_t gdim = gate_val.type_info.matrix_rows;
 
-    uint32_t num_controls = static_cast<uint32_t>(val_to_real(args[1], line));
-    if (num_controls == 0) return gate_val;
+    uint32_t num_ctrls = 1;
+    if (ctrl_val.type_info.type == JanusType::LIST && ctrl_val.list_data) {
+        num_ctrls = static_cast<uint32_t>(ctrl_val.list_data->size());
+    } else {
+        num_ctrls = static_cast<uint32_t>(val_to_real(ctrl_val, line));
+    }
+    if (num_ctrls == 0) num_ctrls = 1;
 
-    uint32_t gate_w = gate_val.type_info.width;
-    uint32_t gate_dim = 1u << gate_w;
-    uint32_t total_w = num_controls + gate_w;
+    uint32_t total_w = gw + num_ctrls;
     uint32_t total_dim = 1u << total_w;
-
-    const auto& U = *gate_val.matrix_data;
     std::vector<std::complex<double>> data(
-        static_cast<uint64_t>(total_dim) * total_dim, {0.0, 0.0});
+        static_cast<std::size_t>(total_dim) * total_dim, {0.0, 0.0});
 
-    uint64_t ctrl_all_one = (uint64_t{1} << num_controls) - 1;
-    for (uint64_t r = 0; r < total_dim; ++r) {
-        for (uint64_t c = 0; c < total_dim; ++c) {
-            uint64_t ctrl_r = r >> gate_w;
-            uint64_t tgt_r = r & (gate_dim - 1);
-            uint64_t ctrl_c = c >> gate_w;
-            uint64_t tgt_c = c & (gate_dim - 1);
-
-            if (ctrl_r != ctrl_c) continue;
-            if (ctrl_r == ctrl_all_one) {
-                data[r * total_dim + c] =
-                    U[tgt_r * gate_dim + tgt_c];
-            } else {
-                data[r * total_dim + c] =
-                    (tgt_r == tgt_c) ? std::complex<double>{1.0, 0.0}
-                                     : std::complex<double>{0.0, 0.0};
+    // Identity for all basis states where any control qubit is 0.
+    uint64_t ctrl_mask = ((uint64_t{1} << num_ctrls) - 1) << gw;
+    for (uint32_t i = 0; i < total_dim; ++i) {
+        if ((static_cast<uint64_t>(i) & ctrl_mask) != ctrl_mask) {
+            data[static_cast<std::size_t>(i) * total_dim + i] = {1.0, 0.0};
+        } else {
+            uint32_t target_bits = i & ((1u << gw) - 1);
+            for (uint32_t j = 0; j < gdim; ++j) {
+                uint32_t col = (i & ~((1u << gw) - 1)) | j;
+                data[static_cast<std::size_t>(i) * total_dim + col] =
+                    (*gate_val.matrix_data)[
+                        static_cast<std::size_t>(target_bits) * gdim + j];
             }
         }
     }
 
     return JanusValue::make_gate(total_w, std::move(data));
-}
-
-
-JanusValue BackendQuEST::builtin_run(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.empty()) report_error(line);
-    QuantumState final_state = execute_circuit(args[0], line);
-    uint64_t outcome = final_state.measure(line);
-    return JanusValue::make_cnum(static_cast<double>(outcome));
-}
-
-
-JanusValue BackendQuEST::builtin_runh(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.size() < 2) report_error(line);
-    uint32_t shots = static_cast<uint32_t>(val_to_real(args[1], line));
-    if (shots == 0) shots = 1;
-
-    std::vector<JanusValue> results;
-    results.reserve(shots);
-    for (uint32_t s = 0; s < shots; ++s) {
-        QuantumState final_state = execute_circuit(args[0], line);
-        uint64_t outcome = final_state.measure(line);
-        results.push_back(
-            JanusValue::make_cnum(static_cast<double>(outcome)));
-    }
-    return JanusValue::make_list(std::move(results));
-}
-
-
-JanusValue BackendQuEST::builtin_isunitary(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.empty()) report_error(line);
-    const auto& val = args[0];
-    if ((val.type_info.type != JanusType::MATRIX &&
-         val.type_info.type != JanusType::GATE) ||
-        !val.matrix_data)
-        return JanusValue::make_cbit(0);
-    uint32_t dim = val.type_info.matrix_rows;
-    if (dim == 0 || dim != val.type_info.matrix_cols)
-        return JanusValue::make_cbit(0);
-    if ((dim & (dim - 1)) != 0)
-        return JanusValue::make_cbit(0);
-    bool result = gate_library::is_unitary(*val.matrix_data, dim);
-    return JanusValue::make_cbit(result ? 1 : 0);
-}
-
-
-JanusValue BackendQuEST::builtin_sameoutput(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.size() < 2) report_error(line);
-    QuantumState s1 = execute_circuit(args[0], line);
-    QuantumState s2 = execute_circuit(args[1], line);
-
-    if (s1.num_qubits() != s2.num_qubits())
-        return JanusValue::make_cbit(0);
-
-    // Compare probability distributions.
-    const auto& a1 = s1.amplitudes();
-    const auto& a2 = s2.amplitudes();
-    for (uint64_t i = 0; i < a1.size(); ++i) {
-        double p1 = std::norm(a1[i]);
-        double p2 = std::norm(a2[i]);
-        if (std::abs(p1 - p2) > 1.0e-10)
-            return JanusValue::make_cbit(0);
-    }
-    return JanusValue::make_cbit(1);
-}
-
-
-JanusValue BackendQuEST::builtin_print(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    (void)line;
-    for (std::size_t i = 0; i < args.size(); ++i) {
-        if (i > 0) std::cout << " ";
-        std::cout << args[i].to_string();
-    }
-    std::cout << std::endl;
-    return JanusValue::make_null();
-}
-
-
-JanusValue BackendQuEST::builtin_delete(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.size() < 2) report_error(line);
-    JanusValue collection = args[0];
-    if (collection.type_info.type == JanusType::LIST) {
-        if (!collection.list_data) report_error(line);
-        int64_t idx = to_integer(args[1], line);
-        auto& list = *collection.list_data;
-        if (idx < 0) idx += static_cast<int64_t>(list.size());
-        if (idx < 0 || static_cast<uint64_t>(idx) >= list.size())
-            report_error(line);
-        list.erase(list.begin() + static_cast<std::ptrdiff_t>(idx));
-        return collection;
-    }
-    if (collection.type_info.type == JanusType::CSTR) {
-        int64_t idx = to_integer(args[1], line);
-        auto& s = collection.str_val;
-        if (idx < 0) idx += static_cast<int64_t>(s.size());
-        if (idx < 0 || static_cast<uint64_t>(idx) >= s.size())
-            report_error(line);
-        s.erase(static_cast<std::size_t>(idx), 1);
-        collection.type_info = make_cstr_type(
-            static_cast<uint32_t>(s.size()));
-        return collection;
-    }
-    report_error(line);
-}
-
-
-JanusValue BackendQuEST::builtin_sin(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.empty()) report_error(line);
-    double v = val_to_real(args[0], line);
-    return JanusValue::make_cnum(std::sin(v));
-}
-
-
-JanusValue BackendQuEST::builtin_cos(
-        const std::vector<JanusValue>& args, uint32_t line) {
-    if (args.empty()) report_error(line);
-    double v = val_to_real(args[0], line);
-    return JanusValue::make_cnum(std::cos(v));
 }
 
 
@@ -1918,8 +1831,13 @@ JanusValue BackendQuEST::builtin_numberofgates(
         grid = &val.block_data->gate_grid;
     else
         report_error(line);
-    return JanusValue::make_cnum(
-        static_cast<double>(circuit_synth::count_gates(*grid)));
+
+    uint64_t count = 0;
+    for (const auto& row : *grid)
+        for (const auto& entry : row)
+            if (entry.type_info.type != JanusType::NULL_TYPE)
+                ++count;
+    return JanusValue::make_cnum(static_cast<double>(count));
 }
 
 
@@ -1933,7 +1851,6 @@ JanusValue BackendQuEST::builtin_det(
         report_error(line);
     uint32_t dim = val.type_info.matrix_rows;
     if (dim != val.type_info.matrix_cols) report_error(line);
-
     auto det = complex_determinant(*val.matrix_data, dim, line);
     return JanusValue::make_cnum_complex(
         static_cast<float>(det.real()),
@@ -1949,13 +1866,14 @@ JanusValue BackendQuEST::builtin_transpose(
          val.type_info.type != JanusType::GATE) ||
         !val.matrix_data)
         report_error(line);
-
     uint32_t rows = val.type_info.matrix_rows;
     uint32_t cols = val.type_info.matrix_cols;
     std::vector<std::complex<double>> data(rows * cols);
     for (uint32_t r = 0; r < rows; ++r)
         for (uint32_t c = 0; c < cols; ++c)
             data[c * rows + r] = (*val.matrix_data)[r * cols + c];
+    if (val.type_info.type == JanusType::GATE)
+        return JanusValue::make_gate(val.type_info.width, std::move(data));
     return JanusValue::make_matrix(cols, rows, std::move(data));
 }
 
@@ -1968,14 +1886,14 @@ JanusValue BackendQuEST::builtin_transposec(
          val.type_info.type != JanusType::GATE) ||
         !val.matrix_data)
         report_error(line);
-
     uint32_t rows = val.type_info.matrix_rows;
     uint32_t cols = val.type_info.matrix_cols;
     std::vector<std::complex<double>> data(rows * cols);
     for (uint32_t r = 0; r < rows; ++r)
         for (uint32_t c = 0; c < cols; ++c)
-            data[c * rows + r] = std::conj(
-                (*val.matrix_data)[r * cols + c]);
+            data[c * rows + r] = std::conj((*val.matrix_data)[r * cols + c]);
+    if (val.type_info.type == JanusType::GATE)
+        return JanusValue::make_gate(val.type_info.width, std::move(data));
     return JanusValue::make_matrix(cols, rows, std::move(data));
 }
 
@@ -1990,16 +1908,15 @@ JanusValue BackendQuEST::builtin_evals(
         report_error(line);
     uint32_t dim = val.type_info.matrix_rows;
     if (dim != val.type_info.matrix_cols) report_error(line);
-
-    auto evals = complex_eigenvalues(*val.matrix_data, dim, line);
-    std::vector<JanusValue> list;
-    list.reserve(evals.size());
-    for (const auto& ev : evals) {
-        list.push_back(JanusValue::make_cnum_complex(
+    auto eigenvalues = complex_eigenvalues(*val.matrix_data, dim, line);
+    std::vector<JanusValue> result_list;
+    result_list.reserve(eigenvalues.size());
+    for (const auto& ev : eigenvalues) {
+        result_list.push_back(JanusValue::make_cnum_complex(
             static_cast<float>(ev.real()),
             static_cast<float>(ev.imag())));
     }
-    return JanusValue::make_list(std::move(list));
+    return JanusValue::make_list(std::move(result_list));
 }
 
 
@@ -2013,10 +1930,9 @@ JanusValue BackendQuEST::builtin_evecs(
         report_error(line);
     uint32_t dim = val.type_info.matrix_rows;
     if (dim != val.type_info.matrix_cols) report_error(line);
-
-    auto evals = complex_eigenvalues(*val.matrix_data, dim, line);
-    auto evecs = complex_eigenvectors(*val.matrix_data, evals, dim, line);
-
+    auto eigenvalues = complex_eigenvalues(*val.matrix_data, dim, line);
+    auto evecs = complex_eigenvectors(
+        *val.matrix_data, eigenvalues, dim, line);
     std::vector<JanusValue> outer_list;
     outer_list.reserve(evecs.size());
     for (const auto& vec : evecs) {
@@ -2247,131 +2163,133 @@ std::vector<std::complex<double>> BackendQuEST::complex_eigenvalues(
         const std::vector<std::complex<double>>& data,
         uint32_t dim, uint32_t line) {
     if (dim == 0) report_error(line);
-
     if (dim == 1) return {data[0]};
 
-    if (dim == 2) {
-        // Direct formula for 2x2.
-        auto a = data[0], b = data[1], c = data[2], d = data[3];
-        auto trace = a + d;
-        auto det = a * d - b * c;
-        auto disc = trace * trace - 4.0 * det;
-        auto sq = std::sqrt(disc);
-        return {(trace + sq) / 2.0, (trace - sq) / 2.0};
-    }
+    const uint32_t n = dim;
+    const uint32_t MAX_ITER = 1000;
 
-    // For larger matrices: Francis QR algorithm on a Hessenberg form.
-    // We reduce to upper Hessenberg, then iterate QR steps.
+    // Copy into working matrix H (will be reduced to upper Hessenberg).
     std::vector<std::complex<double>> H = data;
-    uint32_t n = dim;
 
-    // Hessenberg reduction via Householder reflections.
+    // Reduce to upper Hessenberg form via Householder reflections.
     for (uint32_t k = 0; k + 2 < n; ++k) {
-        // Build Householder reflector for column k below the subdiagonal.
-        uint32_t len = n - k - 1;
-        std::vector<std::complex<double>> x(len);
-        for (uint32_t i = 0; i < len; ++i)
-            x[i] = H[(k + 1 + i) * n + k];
+        // Build Householder vector for column k below the subdiagonal.
+        std::vector<std::complex<double>> v(n - k - 1);
+        for (uint32_t i = 0; i < n - k - 1; ++i)
+            v[i] = H[(k + 1 + i) * n + k];
 
-        double norm_x = 0.0;
-        for (auto& v : x) norm_x += std::norm(v);
-        norm_x = std::sqrt(norm_x);
+        double alpha = 0.0;
+        for (const auto& vi : v) alpha += std::norm(vi);
+        alpha = std::sqrt(alpha);
+        if (alpha < ZERO_TOL) continue;
 
-        if (norm_x < ZERO_TOL) continue;
+        if (std::abs(v[0]) > ZERO_TOL)
+            alpha *= (v[0].real() > 0 ? 1.0 : -1.0);
+        v[0] += std::complex<double>(alpha, 0.0);
 
-        double phase_angle = std::arg(x[0]);
-        std::complex<double> alpha =
-            -norm_x * std::exp(std::complex<double>(0.0, phase_angle));
+        // Normalise v.
+        double vnorm = 0.0;
+        for (const auto& vi : v) vnorm += std::norm(vi);
+        vnorm = std::sqrt(vnorm);
+        if (vnorm < ZERO_TOL) continue;
+        for (auto& vi : v) vi /= vnorm;
 
-        std::vector<std::complex<double>> u = x;
-        u[0] -= alpha;
-        double norm_u = 0.0;
-        for (auto& v : u) norm_u += std::norm(v);
-        norm_u = std::sqrt(norm_u);
-        if (norm_u < ZERO_TOL) continue;
-        for (auto& v : u) v /= norm_u;
-
-        // Apply H = (I - 2 u u†) H from left on rows [k+1, n-1].
+        // Apply H = (I - 2vv*) H (I - 2vv*) in two steps.
+        // Left multiply: H <- (I - 2vv*) H for rows k+1..n-1.
         for (uint32_t j = 0; j < n; ++j) {
             std::complex<double> dot{0.0, 0.0};
-            for (uint32_t i = 0; i < len; ++i)
-                dot += std::conj(u[i]) * H[(k + 1 + i) * n + j];
-            for (uint32_t i = 0; i < len; ++i)
-                H[(k + 1 + i) * n + j] -= 2.0 * u[i] * dot;
+            for (uint32_t i = 0; i < n - k - 1; ++i)
+                dot += std::conj(v[i]) * H[(k + 1 + i) * n + j];
+            for (uint32_t i = 0; i < n - k - 1; ++i)
+                H[(k + 1 + i) * n + j] -= 2.0 * v[i] * dot;
         }
-        // Apply H = H (I - 2 u u†) from right on cols [k+1, n-1].
+        // Right multiply: H <- H (I - 2vv*) for cols k+1..n-1.
         for (uint32_t i = 0; i < n; ++i) {
             std::complex<double> dot{0.0, 0.0};
-            for (uint32_t j = 0; j < len; ++j)
-                dot += u[j] * H[i * n + k + 1 + j];
-            for (uint32_t j = 0; j < len; ++j)
-                H[i * n + k + 1 + j] -= 2.0 * std::conj(u[j]) * dot;
+            for (uint32_t j = 0; j < n - k - 1; ++j)
+                dot += H[i * n + (k + 1 + j)] * v[j];
+            for (uint32_t j = 0; j < n - k - 1; ++j)
+                H[i * n + (k + 1 + j)] -= 2.0 * dot * std::conj(v[j]);
         }
     }
 
     // QR iteration on the Hessenberg matrix.
-    constexpr int MAX_ITER = 1000;
     std::vector<std::complex<double>> eigenvalues;
     eigenvalues.reserve(n);
-
     uint32_t p = n;
+
     while (p > 0) {
         if (p == 1) {
             eigenvalues.push_back(H[0]);
             break;
         }
 
-        // Check for convergence: H[p-1, p-2] ~ 0.
-        int iter = 0;
-        while (iter < MAX_ITER) {
-            // Deflation check.
-            if (std::abs(H[(p - 1) * n + (p - 2)]) < ZERO_TOL *
-                (std::abs(H[(p - 2) * n + (p - 2)]) +
-                 std::abs(H[(p - 1) * n + (p - 1)])) + ZERO_TOL) {
-                H[(p - 1) * n + (p - 2)] = {0.0, 0.0};
-                eigenvalues.push_back(H[(p - 1) * n + (p - 1)]);
-                --p;
-                break;
-            }
+        // Check for 1x1 or 2x2 deflation.
+        if (std::abs(H[(p - 1) * n + (p - 2)]) < ZERO_TOL) {
+            eigenvalues.push_back(H[(p - 1) * n + (p - 1)]);
+            --p;
+            continue;
+        }
 
-            // Wilkinson shift.
-            std::complex<double> shift = H[(p - 1) * n + (p - 1)];
+        if (p == 2) {
+            // Solve 2x2 eigenvalue problem directly.
+            auto a = H[0], b = H[1], c = H[n], d = H[n + 1];
+            auto trace = a + d;
+            auto det2 = a * d - b * c;
+            auto disc = trace * trace - 4.0 * det2;
+            auto sq = std::sqrt(disc);
+            eigenvalues.push_back((trace + sq) / 2.0);
+            eigenvalues.push_back((trace - sq) / 2.0);
+            break;
+        }
 
-            // Shifted QR step via Givens rotations.
+        // Implicit single-shift QR step with Wilkinson shift.
+        std::complex<double> shift = H[(p - 1) * n + (p - 1)];
+
+        uint32_t iter = 0;
+        while (iter < MAX_ITER &&
+               std::abs(H[(p - 1) * n + (p - 2)]) > ZERO_TOL) {
+            // Shift.
             for (uint32_t i = 0; i < p; ++i)
                 H[i * n + i] -= shift;
 
-            // QR decomposition of the shifted H using Givens rotations.
-            // We store the rotation parameters.
-            std::vector<std::complex<double>> cs(p - 1), sn(p - 1);
+            // QR decomposition via Givens rotations.
+            std::vector<double> cs(p - 1), sn_re(p - 1), sn_im(p - 1);
             for (uint32_t i = 0; i + 1 < p; ++i) {
-                std::complex<double> a_val = H[i * n + i];
-                std::complex<double> b_val = H[(i + 1) * n + i];
-                double r = std::sqrt(std::norm(a_val) + std::norm(b_val));
+                auto a = H[i * n + i];
+                auto b = H[(i + 1) * n + i];
+                double r = std::sqrt(std::norm(a) + std::norm(b));
                 if (r < ZERO_TOL) {
-                    cs[i] = {1.0, 0.0};
-                    sn[i] = {0.0, 0.0};
-                } else {
-                    cs[i] = a_val / r;
-                    sn[i] = b_val / r;
+                    cs[i] = 1.0;
+                    sn_re[i] = 0.0;
+                    sn_im[i] = 0.0;
+                    continue;
                 }
-                // Apply Givens rotation from the left.
+                cs[i] = std::abs(a) / r;
+                auto phase = (std::abs(a) > ZERO_TOL)
+                    ? a / std::abs(a) : std::complex<double>{1.0, 0.0};
+                auto s = std::conj(phase) * b / r;
+                sn_re[i] = s.real();
+                sn_im[i] = s.imag();
+
+                // Apply Givens rotation to rows i, i+1.
                 for (uint32_t j = 0; j < p; ++j) {
-                    std::complex<double> t1 = H[i * n + j];
-                    std::complex<double> t2 = H[(i + 1) * n + j];
-                    H[i * n + j] = std::conj(cs[i]) * t1 +
-                                   std::conj(sn[i]) * t2;
-                    H[(i + 1) * n + j] = -sn[i] * t1 + cs[i] * t2;
+                    auto t1 = H[i * n + j];
+                    auto t2 = H[(i + 1) * n + j];
+                    std::complex<double> sv{sn_re[i], sn_im[i]};
+                    H[i * n + j] = cs[i] * t1 + sv * t2;
+                    H[(i + 1) * n + j] = -std::conj(sv) * t1 + cs[i] * t2;
                 }
             }
-            // Apply Givens rotations from the right (R * Q).
+
+            // Multiply R * Q.
             for (uint32_t i = 0; i + 1 < p; ++i) {
                 for (uint32_t j = 0; j < p; ++j) {
-                    std::complex<double> t1 = H[j * n + i];
-                    std::complex<double> t2 = H[j * n + i + 1];
-                    H[j * n + i] = t1 * cs[i] + t2 * sn[i];
-                    H[j * n + i + 1] = -t1 * std::conj(sn[i]) +
-                                        t2 * std::conj(cs[i]);
+                    auto t1 = H[j * n + i];
+                    auto t2 = H[j * n + (i + 1)];
+                    std::complex<double> sv{sn_re[i], sn_im[i]};
+                    H[j * n + i] = cs[i] * t1 + std::conj(sv) * t2;
+                    H[j * n + (i + 1)] = -sv * t1 + cs[i] * t2;
                 }
             }
 
@@ -2453,8 +2371,8 @@ BackendQuEST::complex_eigenvectors(
                 // Backsubstitute.
                 for (uint32_t cc = 0; cc < dim; ++cc) {
                     if (pivot_row_for_col[cc] >= 0) {
-                        uint32_t pr2 = static_cast<uint32_t>(
-                            pivot_row_for_col[cc]);
+                        uint32_t pr2 =
+                            static_cast<uint32_t>(pivot_row_for_col[cc]);
                         vec[cc] -= M[pr2 * dim + c];
                     }
                 }
@@ -2462,23 +2380,147 @@ BackendQuEST::complex_eigenvectors(
             }
         }
         if (!found_free) {
-            // Degenerate case: set last component to 1.
+            // All columns are pivots: near-zero eigenvalue rounding.
+            // Use last column as approximate eigenvector.
             vec[dim - 1] = {1.0, 0.0};
         }
 
-        // Normalise the eigenvector.
+        // Normalise.
         double norm = 0.0;
-        for (const auto& v : vec) norm += std::norm(v);
+        for (const auto& vi : vec) norm += std::norm(vi);
         norm = std::sqrt(norm);
         if (norm > ZERO_TOL) {
-            for (auto& v : vec) v /= norm;
+            for (auto& vi : vec) vi /= norm;
         }
 
         result.push_back(std::move(vec));
     }
 
-    (void)line;
     return result;
+}
+
+
+JanusValue BackendQuEST::builtin_run(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.empty()) report_error(line);
+    QuantumState final_state = execute_circuit(args[0], line);
+    uint64_t outcome = final_state.measure(line);
+    return JanusValue::make_cnum(static_cast<double>(outcome));
+}
+
+
+JanusValue BackendQuEST::builtin_runh(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.size() < 2) report_error(line);
+    uint32_t shots = static_cast<uint32_t>(val_to_real(args[1], line));
+    if (shots == 0) shots = 1;
+
+    std::vector<JanusValue> results;
+    results.reserve(shots);
+    for (uint32_t s = 0; s < shots; ++s) {
+        QuantumState final_state = execute_circuit(args[0], line);
+        uint64_t outcome = final_state.measure(line);
+        results.push_back(
+            JanusValue::make_cnum(static_cast<double>(outcome)));
+    }
+    return JanusValue::make_list(std::move(results));
+}
+
+
+JanusValue BackendQuEST::builtin_isunitary(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.empty()) report_error(line);
+    const auto& val = args[0];
+    if ((val.type_info.type != JanusType::MATRIX &&
+         val.type_info.type != JanusType::GATE) ||
+        !val.matrix_data)
+        return JanusValue::make_cbit(0);
+    uint32_t dim = val.type_info.matrix_rows;
+    if (dim == 0 || dim != val.type_info.matrix_cols)
+        return JanusValue::make_cbit(0);
+    if ((dim & (dim - 1)) != 0)
+        return JanusValue::make_cbit(0);
+    bool result = gate_library::is_unitary(*val.matrix_data, dim);
+    return JanusValue::make_cbit(result ? 1 : 0);
+}
+
+
+JanusValue BackendQuEST::builtin_sameoutput(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.size() < 2) report_error(line);
+    QuantumState s1 = execute_circuit(args[0], line);
+    QuantumState s2 = execute_circuit(args[1], line);
+
+    if (s1.num_qubits() != s2.num_qubits())
+        return JanusValue::make_cbit(0);
+
+    // Compare probability distributions.
+    const auto& a1 = s1.amplitudes();
+    const auto& a2 = s2.amplitudes();
+    for (uint64_t i = 0; i < a1.size(); ++i) {
+        double p1 = std::norm(a1[i]);
+        double p2 = std::norm(a2[i]);
+        if (std::abs(p1 - p2) > 1.0e-10)
+            return JanusValue::make_cbit(0);
+    }
+    return JanusValue::make_cbit(1);
+}
+
+
+JanusValue BackendQuEST::builtin_print(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    (void)line;
+    for (std::size_t i = 0; i < args.size(); ++i) {
+        if (i > 0) std::cout << " ";
+        std::cout << args[i].to_string();
+    }
+    std::cout << std::endl;
+    return JanusValue::make_null();
+}
+
+
+JanusValue BackendQuEST::builtin_delete(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.size() < 2) report_error(line);
+    JanusValue collection = args[0];
+    if (collection.type_info.type == JanusType::LIST) {
+        if (!collection.list_data) report_error(line);
+        int64_t idx = to_integer(args[1], line);
+        auto& list = *collection.list_data;
+        if (idx < 0) idx += static_cast<int64_t>(list.size());
+        if (idx < 0 || static_cast<uint64_t>(idx) >= list.size())
+            report_error(line);
+        list.erase(list.begin() + static_cast<std::ptrdiff_t>(idx));
+        return collection;
+    }
+    if (collection.type_info.type == JanusType::CSTR) {
+        int64_t idx = to_integer(args[1], line);
+        auto& s = collection.str_val;
+        if (idx < 0) idx += static_cast<int64_t>(s.size());
+        if (idx < 0 || static_cast<uint64_t>(idx) >= s.size())
+            report_error(line);
+        s.erase(static_cast<std::size_t>(idx), 1);
+        collection.type_info = make_cstr_type(
+            static_cast<uint32_t>(s.size()));
+        return collection;
+    }
+    report_error(line);
+}
+
+
+JanusValue BackendQuEST::builtin_sin(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.empty()) report_error(line);
+    double v = val_to_real(args[0], line);
+    return JanusValue::make_cnum(std::sin(v));
+}
+
+
+JanusValue BackendQuEST::builtin_cos(
+        const std::vector<JanusValue>& args, uint32_t line) {
+    if (args.empty()) report_error(line);
+    double v = val_to_real(args[0], line);
+    return JanusValue::make_cnum(std::cos(v));
 }
 
 
