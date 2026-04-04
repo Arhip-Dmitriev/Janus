@@ -236,6 +236,17 @@ IRExprPtr IRGen::lower_identifier(const IdentifierExpr& e) {
 IRExprPtr IRGen::lower_index(const IndexExpr& e) {
     TypeInfo ti = type_of(e);
 
+    // Quantum amplitude read: if the object is QNUM or QUBIT and there
+    // is exactly one index, produce an IRQnumIndex instead of IRIndex.
+    TypeInfo obj_ti = type_of(*e.object);
+    if ((obj_ti.type == JanusType::QNUM ||
+         obj_ti.type == JanusType::QUBIT) && e.indices.size() == 1) {
+        auto ir_obj = lower_expr(*e.object);
+        auto ir_idx = lower_expr(*e.indices[0]);
+        return std::make_unique<IRQnumIndex>(
+            e.line, std::move(ir_obj), std::move(ir_idx), ti);
+    }
+
     auto ir_obj = lower_expr(*e.object);
 
     std::vector<IRExprPtr> ir_indices;
@@ -254,6 +265,23 @@ IRExprPtr IRGen::lower_index(const IndexExpr& e) {
 
 IRExprPtr IRGen::lower_assign(const AssignExpr& e) {
     TypeInfo ti = type_of(e);
+
+    // Quantum amplitude write: if the target is an IndexExpr whose object
+    // resolves to QNUM or QUBIT with exactly one index, produce an
+    // IRQnumIndexAssign.  The type checker enforced that the object is a
+    // plain IdentifierExpr, so the lowered object is always an IRVariable.
+    if (const auto* idx = dynamic_cast<const IndexExpr*>(e.target.get())) {
+        TypeInfo obj_ti = type_of(*idx->object);
+        if ((obj_ti.type == JanusType::QNUM ||
+             obj_ti.type == JanusType::QUBIT) && idx->indices.size() == 1) {
+            auto ir_obj   = lower_expr(*idx->object);
+            auto ir_idx   = lower_expr(*idx->indices[0]);
+            auto ir_value = lower_expr(*e.value);
+            return std::make_unique<IRQnumIndexAssign>(
+                e.line, std::move(ir_obj), std::move(ir_idx),
+                std::move(ir_value), ti);
+        }
+    }
 
     auto ir_target = lower_expr(*e.target);
     auto ir_value  = lower_expr(*e.value);
@@ -598,6 +626,7 @@ IRBuiltinOp IRGen::map_builtin_op(TokenType tok, uint32_t line) {
         case TokenType::KW_GATES:         return IRBuiltinOp::GATES;
         case TokenType::KW_QUBITS:        return IRBuiltinOp::QUBITS;
         case TokenType::KW_DEPTH:         return IRBuiltinOp::DEPTH;
+        case TokenType::KW_BITLENGTH:     return IRBuiltinOp::BITLENGTH;
         default:
             report_error(line);
     }
