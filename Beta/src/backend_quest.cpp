@@ -16,7 +16,7 @@
 
 namespace janus {
 
-// Threshold below which a double is considered zero.
+// Threshold below which a double is considered zero. 
 static constexpr double ZERO_TOL = 1.0e-15;
 
 
