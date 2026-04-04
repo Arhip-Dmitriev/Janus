@@ -354,6 +354,16 @@ TypeInfo TypeChecker::check_index(const IndexExpr& e) {
         check_expr(*idx);
     }
 
+    // Quantum amplitude read: qnum[x] or qubit[x] with exactly 1 index.
+    // Result is CNUM.  Index value validation is deferred to runtime.
+    if ((obj_type.type == JanusType::QNUM ||
+         obj_type.type == JanusType::QUBIT) &&
+        e.indices.size() == 1) {
+        TypeInfo ti = make_cnum_type();
+        annotate(e, ti);
+        return ti;
+    }
+
     // Matrix access requires exactly 2 indices.
     if (obj_type.type == JanusType::MATRIX ||
         obj_type.type == JanusType::GATE) {
@@ -480,11 +490,32 @@ TypeInfo TypeChecker::check_assign(const AssignExpr& e) {
     }
 
     if (auto* idx = dynamic_cast<const IndexExpr*>(e.target.get())) {
-        // Index assignment: collection[i] = value or matrix[r,c] = value.
-        check_expr(*idx->object);
+        // Check the object expression of the index target.
+        TypeInfo obj_type = check_expr(*idx->object);
         for (const auto& index : idx->indices) {
             check_expr(*index);
         }
+
+        // Quantum amplitude write: register[x] = v.
+        if (obj_type.type == JanusType::QNUM ||
+            obj_type.type == JanusType::QUBIT) {
+            // The target of a quantum amplitude write must be a plain
+            // identifier at compile time.
+            if (!dynamic_cast<const IdentifierExpr*>(idx->object.get())) {
+                report_error(e.line);
+            }
+            // Right-hand side must be CNUM or QNUM.
+            if (val_type.type != JanusType::CNUM &&
+                val_type.type != JanusType::QNUM) {
+                report_error(e.line);
+            }
+            TypeInfo ti = make_cnum_type();
+            annotate(*idx, ti);
+            annotate(e, ti);
+            return ti;
+        }
+
+        // General index assignment: collection[i] = value or matrix[r,c] = value.
         annotate(*idx, val_type);
         annotate(e, val_type);
         return val_type;
@@ -1179,6 +1210,19 @@ TypeInfo TypeChecker::check_builtin_call(const BuiltinCallExpr& e) {
             break;
         }
 
+        // bitlength(Register) (qubit count of qnum or qubit)
+        case TokenType::KW_BITLENGTH: {
+            if (e.args.size() != 1) {
+                report_error(e.line);
+            }
+            JanusType arg_t = arg_types[0].type;
+            if (arg_t != JanusType::QNUM && arg_t != JanusType::QUBIT) {
+                report_error(e.line);
+            }
+            result = make_cnum_type();
+            break;
+        }
+
         default:
             report_error(e.line);
     }
@@ -1513,8 +1557,17 @@ TypeInfo TypeChecker::resolve_tensor_type(JanusType lhs, JanusType rhs) {
     if (lhs == JanusType::GATE || rhs == JanusType::GATE) {
         return make_gate_type();
     }
-    // For numeric/scalar operands the tensor product produces a matrix.
-    return make_matrix_type();
+    // If both operands are quantum, the result is QNUM.
+    if (is_quantum(lhs) && is_quantum(rhs)) {
+        return make_qnum_type();
+    }
+    // If either operand is quantum, the result is QNUM.
+    if (is_quantum(lhs) || is_quantum(rhs)) {
+        return make_qnum_type();
+    }
+    // Both operands are classical scalars; result is CNUM.
+    return make_cnum_type();
 }
+
 
 } // namespace janus
