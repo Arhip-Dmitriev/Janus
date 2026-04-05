@@ -946,15 +946,6 @@ JanusValue BackendQuEST::binary_ge(const JanusValue& lhs,
 // Bitwise operators
 
 
-static std::optional<JanusType> unary_bitwise_result_type(JanusType t) {
-    if (t == JanusType::CBIT || t == JanusType::QUBIT)
-        return JanusType::CBIT;
-    if (t == JanusType::CNUM || t == JanusType::QNUM)
-        return JanusType::CNUM;
-    return std::nullopt;
-}
-
-
 JanusValue BackendQuEST::binary_bitwise(const JanusValue& lhs,
                                         const JanusValue& rhs,
                                         IRBinaryOp op, uint32_t line) {
@@ -1044,11 +1035,33 @@ JanusValue BackendQuEST::eval_unary(const IRUnary& e) {
         }
 
         case IRUnaryOp::BITWISE_NOT: {
+            // Quantum path: bitwise not on a quantum register permutes
+            // the state vector by flipping every qubit, equivalent to
+            // applying X to every qubit.  The permutation sends basis
+            // state |i> to |~i & mask>, which is unitary and preserves
+            // normalisation.
+            if (is_quantum(operand.type_info.type)) {
+                if (!operand.quantum_val) report_error(e.line);
+                uint32_t nq = operand.quantum_val->num_qubits();
+                uint64_t dim = uint64_t{1} << nq;
+                uint64_t mask = dim - 1;
+                const auto& src = operand.quantum_val->amplitudes();
+                std::vector<std::complex<double>> dst(dim);
+                for (uint64_t i = 0; i < dim; ++i) {
+                    dst[(~i) & mask] = src[i];
+                }
+                QuantumState result(nq);
+                auto& out = result.amplitudes();
+                for (uint64_t i = 0; i < dim; ++i) out[i] = dst[i];
+                apply_p32(result);
+                if (operand.type_info.type == JanusType::QUBIT)
+                    return JanusValue::make_qubit(std::move(result));
+                return JanusValue::make_qnum(std::move(result));
+            }
+            // Classical path.
             int64_t v = to_integer(operand, e.line);
             int64_t result = ~v;
-            auto opt = unary_bitwise_result_type(operand.type_info.type);
-            if (!opt) report_error(e.line);
-            if (opt.value() == JanusType::CBIT)
+            if (operand.type_info.type == JanusType::CBIT)
                 return JanusValue::make_cbit(result != 0 ? 1 : 0);
             return JanusValue::make_cnum(static_cast<double>(result));
         }
@@ -1063,21 +1076,67 @@ JanusValue BackendQuEST::eval_unary(const IRUnary& e) {
         }
 
         case IRUnaryOp::SHIFT_LEFT: {
+            // Quantum path: left shift by 1 permutes basis states by
+            // (i << 1) & mask, dropping the top bit.  This is not
+            // unitary when amplitude exists in states with the top
+            // bit set, so the result is renormalised.  When the full
+            // norm is zero (all amplitude was in high states), report
+            // an error because the result is undefined.
+            if (is_quantum(operand.type_info.type)) {
+                if (!operand.quantum_val) report_error(e.line);
+                uint32_t nq = operand.quantum_val->num_qubits();
+                uint64_t dim = uint64_t{1} << nq;
+                uint64_t mask = dim - 1;
+                const auto& src = operand.quantum_val->amplitudes();
+                std::vector<std::complex<double>> dst(dim, {0.0, 0.0});
+                for (uint64_t i = 0; i < dim; ++i) {
+                    uint64_t j = (i << 1) & mask;
+                    dst[j] += src[i];
+                }
+                QuantumState result(nq);
+                auto& out = result.amplitudes();
+                for (uint64_t i = 0; i < dim; ++i) out[i] = dst[i];
+                result.normalise(e.line);
+                apply_p32(result);
+                if (operand.type_info.type == JanusType::QUBIT)
+                    return JanusValue::make_qubit(std::move(result));
+                return JanusValue::make_qnum(std::move(result));
+            }
+            // Classical path.
             int64_t v = to_integer(operand, e.line);
             int64_t result = v << 1;
-            auto opt = unary_bitwise_result_type(operand.type_info.type);
-            if (!opt) report_error(e.line);
-            if (opt.value() == JanusType::CBIT)
+            if (operand.type_info.type == JanusType::CBIT)
                 return JanusValue::make_cbit(result != 0 ? 1 : 0);
             return JanusValue::make_cnum(static_cast<double>(result));
         }
 
         case IRUnaryOp::SHIFT_RIGHT: {
+            // Quantum path: right shift by 1 permutes basis states by
+            // (i >> 1), dropping the low bit.  As with shift left the
+            // result may be subnormalised and is renormalised here.
+            if (is_quantum(operand.type_info.type)) {
+                if (!operand.quantum_val) report_error(e.line);
+                uint32_t nq = operand.quantum_val->num_qubits();
+                uint64_t dim = uint64_t{1} << nq;
+                const auto& src = operand.quantum_val->amplitudes();
+                std::vector<std::complex<double>> dst(dim, {0.0, 0.0});
+                for (uint64_t i = 0; i < dim; ++i) {
+                    uint64_t j = i >> 1;
+                    dst[j] += src[i];
+                }
+                QuantumState result(nq);
+                auto& out = result.amplitudes();
+                for (uint64_t i = 0; i < dim; ++i) out[i] = dst[i];
+                result.normalise(e.line);
+                apply_p32(result);
+                if (operand.type_info.type == JanusType::QUBIT)
+                    return JanusValue::make_qubit(std::move(result));
+                return JanusValue::make_qnum(std::move(result));
+            }
+            // Classical path.
             int64_t v = to_integer(operand, e.line);
             int64_t result = v >> 1;
-            auto opt = unary_bitwise_result_type(operand.type_info.type);
-            if (!opt) report_error(e.line);
-            if (opt.value() == JanusType::CBIT)
+            if (operand.type_info.type == JanusType::CBIT)
                 return JanusValue::make_cbit(result != 0 ? 1 : 0);
             return JanusValue::make_cnum(static_cast<double>(result));
         }
