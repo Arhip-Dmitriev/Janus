@@ -152,7 +152,7 @@ JanusValue BackendQuEST::eval_expr(const IRExpr& expr) {
     if (auto* e = dynamic_cast<const IRIndex*>(&expr))
         return eval_index(*e);
 
-    // Quantum amplitude read: qnum_or_qubit[index].
+   // Quantum amplitude read: qnum_or_qubit[index].
     if (auto* e = dynamic_cast<const IRQnumIndex*>(&expr)) {
         JanusValue obj = eval_expr(*e->object);
         JanusValue idx_val = eval_expr(*e->index);
@@ -160,18 +160,27 @@ JanusValue BackendQuEST::eval_expr(const IRExpr& expr) {
         uint32_t nq = obj.quantum_val->num_qubits();
         uint64_t basis_index = 0;
         if (idx_val.type_info.type == JanusType::CNUM) {
+            if (idx_val.real_val < 0) report_error(e->line);
             basis_index = static_cast<uint64_t>(idx_val.real_val);
         } else if (idx_val.type_info.type == JanusType::CSTR) {
             const std::string& bstr = idx_val.str_val;
-            if (static_cast<uint32_t>(bstr.size()) != nq)
-                report_error(e->line);
+            if (bstr.empty()) report_error(e->line);
+            bool all_binary = true;
             for (char ch : bstr) {
-                if (ch != '0' && ch != '1')
-                    report_error(e->line);
+                if (ch != '0' && ch != '1') { all_binary = false; break; }
             }
-            basis_index = 0;
-            for (char ch : bstr) {
-                basis_index = (basis_index << 1) | static_cast<uint64_t>(ch == '1' ? 1 : 0);
+            if (all_binary) {
+                basis_index = 0;
+                for (char ch : bstr) {
+                    basis_index = (basis_index << 1) |
+                                  static_cast<uint64_t>(ch == '1' ? 1 : 0);
+                }
+            } else {
+                const char* first = bstr.data();
+                const char* last = bstr.data() + bstr.size();
+                auto res = std::from_chars(first, last, basis_index);
+                if (res.ec != std::errc() || res.ptr != last)
+                    report_error(e->line);
             }
         } else {
             report_error(e->line);
@@ -200,18 +209,27 @@ JanusValue BackendQuEST::eval_expr(const IRExpr& expr) {
         uint32_t nq = target_ptr->quantum_val->num_qubits();
         uint64_t basis_index = 0;
         if (idx_val.type_info.type == JanusType::CNUM) {
+            if (idx_val.real_val < 0) report_error(e->line);
             basis_index = static_cast<uint64_t>(idx_val.real_val);
         } else if (idx_val.type_info.type == JanusType::CSTR) {
             const std::string& bstr = idx_val.str_val;
-            if (static_cast<uint32_t>(bstr.size()) != nq)
-                report_error(e->line);
+            if (bstr.empty()) report_error(e->line);
+            bool all_binary = true;
             for (char ch : bstr) {
-                if (ch != '0' && ch != '1')
-                    report_error(e->line);
+                if (ch != '0' && ch != '1') { all_binary = false; break; }
             }
-            basis_index = 0;
-            for (char ch : bstr) {
-                basis_index = (basis_index << 1) | static_cast<uint64_t>(ch == '1' ? 1 : 0);
+            if (all_binary) {
+                basis_index = 0;
+                for (char ch : bstr) {
+                    basis_index = (basis_index << 1) |
+                                  static_cast<uint64_t>(ch == '1' ? 1 : 0);
+                }
+            } else {
+                const char* first = bstr.data();
+                const char* last = bstr.data() + bstr.size();
+                auto res = std::from_chars(first, last, basis_index);
+                if (res.ec != std::errc() || res.ptr != last)
+                    report_error(e->line);
             }
         } else {
             report_error(e->line);
