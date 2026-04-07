@@ -219,6 +219,30 @@ void Emitter::emit_preamble() {
     line("    return Statevector.from_int(val, 2 ** n)");
     blank_line();
 
+    // Quantum amplitude basis index resolver.  Accepts numeric indices
+    // and string indices (binary literals or decimal strings), validates
+    // the result against the register dimension, and returns a Python
+    // integer.  _janus_error is defined later in the preamble; Python
+    // resolves it at call time so forward reference is fine.
+    line("def _janus_qbasis(idx, nq):");
+    line("    dim = 1 << int(nq)");
+    line("    if isinstance(idx, str):");
+    line("        if len(idx) == 0:");
+    line("            _janus_error(0)");
+    line("        if all(c == '0' or c == '1' for c in idx):");
+    line("            b = int(idx, 2)");
+    line("        else:");
+    line("            try:");
+    line("                b = int(idx, 10)");
+    line("            except Exception:");
+    line("                _janus_error(0)");
+    line("    else:");
+    line("        b = int(idx)");
+    line("    if b < 0 or b >= dim:");
+    line("        _janus_error(0)");
+    line("    return b");
+    blank_line();
+
     line("def _janus_measure(sv):");
     line("    outcome, new_sv = sv.measure()");
     line("    return int(outcome, 2), new_sv");
@@ -657,17 +681,15 @@ std::string Emitter::emit_index(const IRIndex& e) {
 
 
 // Quantum amplitude read: qnum_or_qubit[index].
+// Always routed through _janus_qbasis so that string and numeric indices
+// share a single validated resolution path.  Uses .data so that the
+// resulting expression is a numpy complex scalar, matching the write
+// path which mutates OBJ.data.
 
 std::string Emitter::emit_qnum_index(const IRQnumIndex& e) {
     std::string obj = emit_expr(*e.object);
-    // A CSTR string index is detectable as an IRStringLiteral containing
-    // a binary string.  Emit int('BSTR', 2) for binary address lookup.
-    if (const auto* str_lit = dynamic_cast<const IRStringLiteral*>(e.index.get())) {
-        return obj + "[int('" + str_lit->value + "', 2)]";
-    }
-    // CNUM integer index.
     std::string idx = emit_expr(*e.index);
-    return obj + "[int(" + idx + ")]";
+    return obj + ".data[_janus_qbasis(" + idx + ", " + obj + ".num_qubits)]";
 }
 
 
@@ -678,14 +700,9 @@ std::string Emitter::emit_qnum_index_assign(const IRQnumIndexAssign& e) {
     auto* target_var = dynamic_cast<const IRVariable*>(e.object.get());
     std::string var_name = target_var->name;
 
-    // Compute index expression.
-    std::string idx_expr;
-    if (const auto* str_lit = dynamic_cast<const IRStringLiteral*>(e.index.get())) {
-        idx_expr = "int('" + str_lit->value + "', 2)";
-    } else {
-        std::string idx = emit_expr(*e.index);
-        idx_expr = "int(" + idx + ")";
-    }
+    // Compute index expression unconditionally; _janus_qbasis handles
+    // literal strings, runtime string variables, and numeric expressions.
+    std::string idx_src = emit_expr(*e.index);
 
     // Evaluate the value.  If the value is a quantum register, measure it
     // first to obtain a classical scalar, mirroring the runtime
@@ -706,11 +723,14 @@ std::string Emitter::emit_qnum_index_assign(const IRQnumIndexAssign& e) {
         scalar = emit_expr(*e.value);
     }
 
-    // Set the amplitude at the given index and renormalise using numpy.
+    // Resolve the basis index, mutate a copy of the underlying data
+    // array, renormalise, and rebuild the Statevector.
+    std::string tb = fresh_temp();
     std::string td = fresh_temp();
     std::string tn = fresh_temp();
+    line(tb + " = _janus_qbasis(" + idx_src + ", " + var_name + ".num_qubits)");
     line(td + " = " + var_name + ".data.copy()");
-    line(td + "[" + idx_expr + "] = " + scalar);
+    line(td + "[" + tb + "] = " + scalar);
     line(tn + " = np.linalg.norm(" + td + ")");
     line(var_name + " = Statevector(" + td + " / " + tn + ")");
 
